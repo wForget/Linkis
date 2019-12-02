@@ -21,7 +21,7 @@ import java.nio.file.Paths
 import java.security.PrivilegedExceptionAction
 
 import com.webank.wedatasphere.linkis.common.conf.CommonVars
-import com.webank.wedatasphere.linkis.common.conf.Configuration.{HADOOP_ROOT_USER, KERBEROS_ENABLE, KEYTAB_FILE, kEYTAB_HOST}
+import com.webank.wedatasphere.linkis.common.conf.Configuration.{HADOOP_ROOT_USER, KERBEROS_ENABLE, KEYTAB_FILE, kEYTAB_HOST,KEYTAB_HOST_ENABLED}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.fs.{FileSystem, Path}
 import org.apache.hadoop.security.UserGroupInformation
@@ -63,12 +63,20 @@ object HDFSUtils {
   def getUserGroupInformation(userName: String): UserGroupInformation ={
     if(KERBEROS_ENABLE.getValue) {
       val path = new File(KEYTAB_FILE.getValue , userName + ".keytab").getPath
-      val user = userName + "/" + kEYTAB_HOST.getValue
+      val user = getKerberosUser(userName)
       UserGroupInformation.setConfiguration(getConfiguration(userName))
       UserGroupInformation.loginUserFromKeytabAndReturnUGI(user, path)
     } else {
       UserGroupInformation.createRemoteUser(userName)
     }
+  }
+
+  def getKerberosUser(userName: String): String = {
+    var user = userName
+    if(KEYTAB_HOST_ENABLED.getValue){
+      user = user+ "/" + kEYTAB_HOST.getValue
+    }
+    user
   }
 
 }

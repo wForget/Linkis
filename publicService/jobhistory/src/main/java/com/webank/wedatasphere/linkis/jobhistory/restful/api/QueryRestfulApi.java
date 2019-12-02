@@ -46,7 +46,7 @@ import java.util.List;
  * 018/10/19
  */
 @Component
-@Path("/publicservice")
+@Path("/jobhistory")
 @Produces(MediaType.APPLICATION_JSON)
 @Consumes(MediaType.APPLICATION_JSON)
 public class QueryRestfulApi{
@@ -59,7 +59,8 @@ public class QueryRestfulApi{
     @GET
     @Path("/{id}/get")
     public Response getTaskByID(@Context HttpServletRequest req, @PathParam("id") Long taskID) {
-        QueryTaskVO vo = queryService.getTaskByID(taskID);
+        String username = SecurityFilter.getLoginUsername(req);
+        QueryTaskVO vo = queryService.getTaskByID(taskID,username);
         return Message.messageToResponse(Message.ok().data("task",vo));
     }
 
