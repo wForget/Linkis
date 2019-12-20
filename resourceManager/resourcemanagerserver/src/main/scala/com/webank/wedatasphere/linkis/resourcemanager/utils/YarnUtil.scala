@@ -128,7 +128,7 @@ object YarnUtil extends Logging{
         }
       case JNull | JNothing => None
     }
-    def getChildQueues(resp:JValue):JValue = if (hadoop_version.startsWith("2.7")) {
+    def getChildQueues(resp:JValue):JValue = if (hadoop_version.startsWith("2.6")) {
       resp  \ "childQueues"
     } else {
       resp \ "childQueues" \ "queue"
