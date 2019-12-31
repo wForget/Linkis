@@ -133,6 +133,14 @@
                     <groupId>org.codehaus.jackson</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-runtime</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
         <dependency>
@@ -163,6 +171,14 @@
                 <exclusion>
                     <groupId>org.codehaus.jackson</groupId>
                     <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-runtime</artifactId>
                 </exclusion>
             </exclusions>
 
@@ -236,6 +252,14 @@
                     <groupId>org.codehaus.jackson</groupId>
                     <artifactId>*</artifactId>
                 </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-runtime</artifactId>
+                </exclusion>
             </exclusions>
         </dependency>
 
@@ -261,8 +285,8 @@
                     <artifactId>httpcore</artifactId>
                 </exclusion>
                 <exclusion>
-                    <artifactId>javax.rs.ws</artifactId>
-                    <groupId>jsr311-api</groupId>
+                    <artifactId>jsr311-api</artifactId>
+                    <groupId>javax.ws.rs</groupId>
                 </exclusion>
                 <exclusion>
                     <groupId>com.sun.jersey</groupId>
@@ -271,6 +295,14 @@
                 <exclusion>
                     <groupId>org.codehaus.jackson</groupId>
                     <artifactId>*</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-compiler</artifactId>
+                </exclusion>
+                <exclusion>
+                    <groupId>tomcat</groupId>
+                    <artifactId>jasper-runtime</artifactId>
                 </exclusion>
             </exclusions>
         </dependency>
