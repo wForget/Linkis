@@ -54,6 +54,7 @@ class SpringCloudGatewayHttpRequest(request: AbstractServerHttpRequest) extends 
     val cookies = new JMap[String, Array[Cookie]]
     cookieMap.foreach {case (key, value) => if(value != null && value.nonEmpty) cookies.put(key, value.map(c => new Cookie(c.getName, c.getValue)).toArray)
     else cookies.put(key, Array.empty)}
+    addCookiesFromHeaders(cookies, headers)
     cookies
   }
 
@@ -110,4 +111,34 @@ class SpringCloudGatewayHttpRequest(request: AbstractServerHttpRequest) extends 
   override def getRequestBody: String = requestBody
 
   def isRequestBodyAutowired: Boolean = requestAutowired
+
+  private def addCookiesFromHeaders(cookies: JMap[String, Array[Cookie]], headers: JMap[String, Array[String]]) = {
+    if (headers.containsKey("Cookie")) {
+      headers.get("Cookie").flatMap(_.split(";"))
+        .map(cookieItem => {
+          val item = cookieItem.trim
+          val index = item.indexOf("=")
+          var name = ""
+          var value = ""
+          if (index < 0) {
+            name = item
+          } else {
+            name = item.substring(0, index)
+          }
+          if (index < item.length - 1) {
+            value = item.substring(index + 1, item.length)
+          }
+          (name, value)
+        })
+        .map(item => new Cookie(item._1, item._2))
+        .groupBy(_.getName)
+        .foreach(item => {
+          if(cookies.get(item._1) == null) {
+            cookies.put(item._1, item._2)
+          } else {
+            cookies.get(item._1) :+ item._2
+          }
+        })
+    }
+  }
 }

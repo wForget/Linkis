@@ -136,7 +136,14 @@ public class GatewayAuthorizationFilter extends JavaLog implements GlobalFilter,
         if(!SecurityFilter.doFilter(gatewayContext)) {
             return gatewayHttpResponse.getResponseMono();
         } else if(gatewayContext.isWebSocketRequest()) {
-            return chain.filter(exchange);
+            ServerHttpRequest.Builder builder = exchange.getRequest().mutate().headers(SpringCloudHttpUtils::addIgnoreTimeoutSignal);
+            if(!((SpringCloudGatewayHttpRequest) gatewayContext.getRequest()).getAddCookies().isEmpty()) {
+                builder.headers(httpHeaders -> {
+                    SpringCloudHttpUtils.addCookies(httpHeaders, ((SpringCloudGatewayHttpRequest) gatewayContext.getRequest()).getAddCookies());
+                });
+            }
+            return chain.filter(exchange.mutate().request(builder.build()).build());
+//            return chain.filter(exchange);
         }
         ServiceInstance serviceInstance;
         try {
