@@ -116,7 +116,8 @@
         </dependency>
         <dependency>
             <groupId>net.databinder.dispatch</groupId>
-            <artifactId>dispatch-core_${scala.binary.version}</artifactId>
+            <artifactId>dispatch-core_2.11</artifactId>
+<!--            <artifactId>dispatch-core_${scala.binary.version}</artifactId>-->
             <version>${dispatch.version}</version>
             <exclusions>
                 <exclusion>
@@ -127,7 +128,8 @@
         </dependency>
         <dependency>
             <groupId>net.databinder.dispatch</groupId>
-            <artifactId>dispatch-json4s-jackson_${scala.binary.version}</artifactId>
+            <artifactId>dispatch-json4s-jackson_2.11</artifactId>
+<!--            <artifactId>dispatch-json4s-jackson_${scala.binary.version}</artifactId>-->
             <version>${dispatch.version}</version>
             <exclusions>
                 <exclusion>

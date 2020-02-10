@@ -124,10 +124,12 @@
         <spring.boot.version>2.0.3.RELEASE</spring.boot.version>
         <gson.version>2.8.5</gson.version>
         <fasterxml.jackson.version>2.9.6</fasterxml.jackson.version>
-        <scala.version>2.11.8</scala.version>
+        <scala.version>2.12.8</scala.version>
+<!--        <scala.version>2.11.8</scala.version>-->
         <jdk.compile.version>1.8</jdk.compile.version>
         <plugin.scala.version>2.15.2</plugin.scala.version>
-        <scala.binary.version>2.11</scala.binary.version>
+        <scala.binary.version>2.12</scala.binary.version>
+<!--        <scala.binary.version>2.11</scala.binary.version>-->
         <jersey.version>2.16</jersey.version>
         <jersey.servlet.version>2.23.1</jersey.servlet.version>
         <jetty.version>9.4.11.v20180605</jetty.version>
@@ -233,9 +235,9 @@
     <profiles>
         <profile>
             <id>spark2.1.0.cloudera1</id>
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
+<!--            <activation>-->
+<!--                <activeByDefault>true</activeByDefault>-->
+<!--            </activation>-->
             <properties>
                 <project.release.version>0.9.3</project.release.version>
                 <netty.version>4.0.42.Final</netty.version>
@@ -245,9 +247,9 @@
 
         <profile>
             <id>product</id>
-<!--            <activation>-->
-<!--                <activeByDefault>true</activeByDefault>-->
-<!--            </activation>-->
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
             <properties>
                 <project.release.version>0.9.3</project.release.version>
                 <netty.version>4.1.17.Final</netty.version>
@@ -420,13 +422,13 @@
                                 <goal>testCompile</goal>
                             </goals>
                         </execution>
-                        <execution>
-                            <id>attach-scaladocs</id>
-                            <phase>verify</phase>
-                            <goals>
-                                <goal>doc-jar</goal>
-                            </goals>
-                        </execution>
+<!--                        <execution>-->
+<!--                            <id>attach-scaladocs</id>-->
+<!--                            <phase>verify</phase>-->
+<!--                            <goals>-->
+<!--                                <goal>doc-jar</goal>-->
+<!--                            </goals>-->
+<!--                        </execution>-->
                     </executions>
                     <configuration>
                         <scalaVersion>${scala.version}</scalaVersion>

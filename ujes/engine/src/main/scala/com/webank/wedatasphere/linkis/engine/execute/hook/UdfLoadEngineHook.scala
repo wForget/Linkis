@@ -21,6 +21,7 @@ import java.io.File
 import com.webank.wedatasphere.linkis.common.utils.Logging
 import com.webank.wedatasphere.linkis.engine.conf.EngineConfiguration._
 import com.webank.wedatasphere.linkis.engine.execute.{EngineExecutor, EngineHook}
+import com.webank.wedatasphere.linkis.hadoop.common.utils.HDFSUtils
 import com.webank.wedatasphere.linkis.protocol.engine.RequestEngine
 import com.webank.wedatasphere.linkis.rpc.Sender
 import com.webank.wedatasphere.linkis.scheduler.executer.{ExecuteRequest, RunTypeExecuteRequest}
@@ -28,8 +29,9 @@ import com.webank.wedatasphere.linkis.server.JMap
 import com.webank.wedatasphere.linkis.udf.api.rpc.{RequestUdfTree, ResponseUdfTree}
 import com.webank.wedatasphere.linkis.udf.entity.{UDFInfo, UDFTree}
 import org.apache.commons.collections.CollectionUtils
-import org.apache.commons.io.FileUtils
+import org.apache.commons.io.{FileUtils, IOUtils}
 import org.apache.commons.lang.StringUtils
+import org.apache.hadoop.fs.Path
 import org.codehaus.jackson.map.ObjectMapper
 
 import scala.collection.mutable
@@ -134,12 +136,23 @@ abstract class UdfLoadEngineHook extends EngineHook with Logging{ self =>
 
   protected def readFile(path: String): String = {
     info("read file: " + path)
-    val file = new File(path)
-    if(file.exists()){
-      FileUtils.readFileToString(file)
+    if (path.startsWith("hdfs://")) {
+      val hdfsPath = new Path(path)
+      if (HDFSUtils.getHDFSRootUserFileSystem.exists(hdfsPath)) {
+        val inputStream = HDFSUtils.getHDFSRootUserFileSystem.open(hdfsPath)
+        IOUtils.toString(inputStream);
+      } else {
+        info("udf file: [" + path + "] doesn't exist, ignore it.")
+        ""
+      }
     } else {
-      info("udf file: [" + path + "] doesn't exist, ignore it.")
-      ""
+      val file = new File(path)
+      if(file.exists()){
+        FileUtils.readFileToString(file)
+      } else {
+        info("udf file: [" + path + "] doesn't exist, ignore it.")
+        ""
+      }
     }
   }
 

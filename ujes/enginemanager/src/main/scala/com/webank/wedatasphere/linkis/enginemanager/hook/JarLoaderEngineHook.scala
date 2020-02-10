@@ -19,6 +19,7 @@ package com.webank.wedatasphere.linkis.enginemanager.hook
 import com.webank.wedatasphere.linkis.common.utils.Logging
 import com.webank.wedatasphere.linkis.enginemanager.{Engine, EngineHook}
 import com.webank.wedatasphere.linkis.enginemanager.conf.EngineManagerConfiguration.ENGINE_UDF_APP_NAME
+import com.webank.wedatasphere.linkis.hadoop.common.utils.HDFSUtils
 import com.webank.wedatasphere.linkis.protocol.engine.RequestEngine
 import com.webank.wedatasphere.linkis.rpc.Sender
 import com.webank.wedatasphere.linkis.udf.api.rpc.{RequestUdfTree, ResponseUdfTree}
@@ -26,6 +27,7 @@ import com.webank.wedatasphere.linkis.udf.entity.{UDFInfo, UDFTree}
 import org.apache.commons.collections.CollectionUtils
 import org.apache.commons.io.FileUtils
 import org.apache.commons.lang.StringUtils
+import org.apache.hadoop.fs.Path
 import org.codehaus.jackson.map.ObjectMapper
 
 import scala.collection.JavaConversions._
@@ -38,7 +40,8 @@ class JarLoaderEngineHook extends EngineHook with Logging{
     val udfInfos = extractUdfInfos(requestEngine).filter{info => info.getUdfType == 0 && info.getExpire == false && StringUtils.isNotBlank(info.getPath) && isJarExists(info) && info.getLoad == true }
     // add to class path
     val jars = new mutable.HashSet[String]()
-    udfInfos.foreach{udfInfo => jars.add("file://" + udfInfo.getPath)}
+//    udfInfos.foreach{udfInfo => jars.add("file://" + udfInfo.getPath)}
+    udfInfos.foreach{udfInfo => jars.add(udfInfo.getPath)}
     val jarPaths = jars.mkString(",")
     if(StringUtils.isBlank(requestEngine.properties.get("jars"))){
       requestEngine.properties.put("jars", jarPaths)
@@ -56,12 +59,22 @@ class JarLoaderEngineHook extends EngineHook with Logging{
   }
 
   protected def isJarExists(udfInfo: UDFInfo) : Boolean = {
-    if(FileUtils.getFile(udfInfo.getPath).exists()){
-      true
+    var isExists = false
+    if (udfInfo.getPath.startsWith("hdfs://")) {
+      isExists = HDFSUtils.getHDFSRootUserFileSystem.exists(new Path(udfInfo.getPath))
     } else {
-      info(s"The jar file [${udfInfo.getPath}] of UDF [${udfInfo.getUdfName}] doesn't exist, ignore it.")
-      false
+      isExists = FileUtils.getFile(udfInfo.getPath).exists()
     }
+    if (!isExists) {
+      info(s"The jar file [${udfInfo.getPath}] of UDF [${udfInfo.getUdfName}] doesn't exist, ignore it.")
+    }
+    isExists
+//    if(FileUtils.getFile(udfInfo.getPath).exists()){
+//      true
+//    } else {
+//      info(s"The jar file [${udfInfo.getPath}] of UDF [${udfInfo.getUdfName}] doesn't exist, ignore it.")
+//      false
+//    }
   }
 
   protected def extractUdfInfos(requestEngine: RequestEngine): mutable.ArrayBuffer[UDFInfo] = {

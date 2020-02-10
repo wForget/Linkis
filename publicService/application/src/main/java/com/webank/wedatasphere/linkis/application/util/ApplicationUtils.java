@@ -49,9 +49,10 @@ public class ApplicationUtils {
         /*@Cleanup FileSystem fs = (FileSystem) FSFactory.getFs(fsPath);
         fs.init(null);
         fs.createNewFile(fsPath);*/
-        FileSystemUtils.createNewFile(fsPath,creator,true);
-//        @Cleanup FileSystem fs = (FileSystem) FSFactory.getFs(fsPath);
-        @Cleanup FileSystem fs = (FileSystem) FSFactory.getFsByProxyUser(fsPath, creator);
+        FileSystemUtils.createNewFile(fsPath,true);
+        @Cleanup FileSystem fs = (FileSystem) FSFactory.getFs(fsPath);
+//        FileSystemUtils.createNewFile(fsPath,creator,true);
+//        @Cleanup FileSystem fs = (FileSystem) FSFactory.getFsByProxyUser(fsPath, creator);
         fs.init(null);
         @Cleanup OutputStream os = fs.write(fsPath, true);
         @Cleanup ByteArrayInputStream is = new ByteArrayInputStream(flows.getBytes());
