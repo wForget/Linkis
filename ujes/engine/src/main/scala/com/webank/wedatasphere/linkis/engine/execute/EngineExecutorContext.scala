@@ -29,6 +29,7 @@ import com.webank.wedatasphere.linkis.protocol.engine.JobProgressInfo
 import com.webank.wedatasphere.linkis.rpc.Sender
 import com.webank.wedatasphere.linkis.scheduler.executer.{AliasOutputExecuteResponse, OutputExecuteResponse}
 import com.webank.wedatasphere.linkis.storage.resultset.{ResultSetFactory, ResultSetWriter}
+import com.webank.wedatasphere.linkis.storage.utils.StorageUtils
 import com.webank.wedatasphere.linkis.storage.{LineMetaData, LineRecord}
 import org.apache.commons.io.IOUtils
 import org.apache.commons.lang.StringUtils
@@ -117,8 +118,9 @@ class EngineExecutorContext(engineExecutor: EngineExecutor) extends Logging{
   def addProperty(key:String, value:String):Unit = properties.put(key, value)
 
   protected def getDefaultStorePath: String = {
+    val user = StorageUtils.getJvmUser
     val path = ENGINE_RESULT_SET_STORE_PATH.getValue
-    (if(path.endsWith("/")) path else path + "/") + "user" + "/" +
+    (if(path.endsWith("/")) path else path + "/") + user + "/" +
       DateFormatUtils.format(System.currentTimeMillis(), "yyyyMMdd") + "/" + Sender.getThisServiceInstance.getApplicationName +
       "/" + System.nanoTime
   }
