@@ -15,12 +15,15 @@ import com.webank.wedatasphere.linkis.scheduler.executer.ExecutorState.ExecutorS
 @EnableResourceManager
 class EsEngineManager(resources: ModuleInfo) extends EngineManager with Logging {
 
+  // TODO 修正 resource
+
+
 
   /**
    * The user initializes the operation. When the entance is started for the first time, all the engines are obtained through this method, and the initialization operation is completed.
    * 用户初始化操作，第一次启动entrance时，将通过该方法，拿到所有的engine，完成初始化操作
    */
-  override def readAliveEngines(): Unit = ???
+  override def readAliveEngines(): Unit = { }
 
   override def get(id: Long): EntranceEngine = ???
 

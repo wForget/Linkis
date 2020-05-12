@@ -1,48 +1,24 @@
 package com.webank.wedatasphere.linkis.entrance.executor
 
-import java.util.concurrent.CountDownLatch
+import java.io.IOException
 
-import com.webank.wedatasphere.linkis.common.utils.{Logging, Utils}
-import com.webank.wedatasphere.linkis.entrance.executor.esclient.EsClient
+import com.webank.wedatasphere.linkis.common.utils.Logging
 import com.webank.wedatasphere.linkis.scheduler.executer.ExecuteResponse
-import com.webank.wedatasphere.linkis.server.JMap
-import org.elasticsearch.client.{Cancellable, Response, ResponseListener}
 
 /**
  *
  * @author wang_zh
- * @date 2020/5/11
+ * @date 2020/5/12
  */
-abstract class EsEngineExecutor(client: EsClient, properties: JMap[String, String]) extends Logging {
+trait EsEngineExecutor extends Logging {
 
-  private var cancelable: Cancellable = _
+  @throws(classOf[IOException])
+  def open : Unit
 
-  def execute(code: String): ExecuteResponse = {
-    val countDown = new CountDownLatch(1);
-    var executeResponse: ExecuteResponse = _
-    cancelable = client.execute(code, properties, new ResponseListener {
-      override def onSuccess(response: Response): Unit = {
-        executeResponse = convertResponse(response)
-        countDown.countDown()
-      }
-      override def onFailure(exception: Exception): Unit = {
-        warn("EsEngineExecutor execute error: {}", exception)
-        countDown.countDown()
-      }
-    })
-    countDown.await()
-    executeResponse
-  }
+  def parse(code: String): Array[String]
 
-  private def convertResponse(response: Response): ExecuteResponse = {
-    // todo convert response to executeResponse
-  }
+  def executeLine(code: String, storePath: String, alias: String): ExecuteResponse
 
-  def close: Unit = cancelable match {
-    case c: Cancellable => c.cancel()
-    case _ =>
-  }
-
-  def kind: Kind
+  def close: Unit
 
 }
