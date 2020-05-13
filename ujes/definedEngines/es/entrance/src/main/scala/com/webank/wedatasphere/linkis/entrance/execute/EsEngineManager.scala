@@ -15,7 +15,7 @@ import com.webank.wedatasphere.linkis.scheduler.executer.ExecutorState.ExecutorS
 @EnableResourceManager
 class EsEngineManager(resources: ModuleInfo) extends EngineManager with Logging {
 
-  // TODO 修正 resource
+  // TODO 修正 EntranceEngine 使用的 resources
 
 
 

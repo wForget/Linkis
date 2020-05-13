@@ -1,4 +1,4 @@
-package com.webank.wedatasphere.linkis.entrance.executor
+package com.webank.wedatasphere.linkis.entrance.executor.impl
 
 import java.util.concurrent.CountDownLatch
 
@@ -6,10 +6,9 @@ import com.webank.wedatasphere.linkis.common.utils.Utils
 import com.webank.wedatasphere.linkis.entrance.exception.EsConvertResponseException
 import com.webank.wedatasphere.linkis.entrance.executor.codeparser.CodeParser
 import com.webank.wedatasphere.linkis.entrance.executor.esclient.EsClient
+import com.webank.wedatasphere.linkis.entrance.executor.{EsEngineExecutor, ResultSerialize}
 import com.webank.wedatasphere.linkis.scheduler.executer.{ErrorExecuteResponse, ExecuteResponse, SuccessExecuteResponse}
 import com.webank.wedatasphere.linkis.server.JMap
-import org.apache.http.entity.ContentType
-import org.apache.http.util.EntityUtils
 import org.elasticsearch.client.{Cancellable, Response, ResponseListener}
 
 /**
@@ -23,7 +22,11 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
   private var codeParser: CodeParser = _
 
   override def open: Unit = {
-    this.codeParser = CodeParser.codeParser(runType)
+    runType.trim.toLowerCase match {
+      case "esjson" || "json" => CodeParser.ESJSON_CODE_PARSER
+      case "essql" || "sql" => CodeParser.ESSQL_CODE_PARSER
+      case _ => CodeParser.ESJSON_CODE_PARSER
+    }
   }
 
   override def parse(code: String): Array[String] = {
@@ -49,12 +52,10 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
     executeResponse
   }
 
+  // convert response to executeResponse
   private def convertResponse(response: Response, storePath: String, alias: String): ExecuteResponse =  Utils.tryCatch{
-    // todo convert response to executeResponse
     if (response.getStatusLine.getStatusCode == 200) {
-      val contentType = ContentType.get(response.getEntity).getMimeType.toLowerCase
-      val content = EntityUtils.toByteArray(response.getEntity)
-
+      ResultSerialize.RESULT_SERIALIZE.serialize(response, storePath, alias)
       SuccessExecuteResponse()
     } else {
       throw EsConvertResponseException("EsEngineExecutor convert response fail. response code: " + response.getStatusLine.getStatusCode)

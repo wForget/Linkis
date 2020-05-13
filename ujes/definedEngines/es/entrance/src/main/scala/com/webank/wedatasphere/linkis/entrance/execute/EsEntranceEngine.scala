@@ -1,8 +1,8 @@
 package com.webank.wedatasphere.linkis.entrance.execute
 
-import com.webank.wedatasphere.linkis.common.utils.Utils
-import com.webank.wedatasphere.linkis.entrance.executor.{EsEngineExecutor, EsEngineExecutorImpl}
+import com.webank.wedatasphere.linkis.entrance.executor.EsEngineExecutor
 import com.webank.wedatasphere.linkis.entrance.executor.esclient.{EsClient, EsClientFactory}
+import com.webank.wedatasphere.linkis.entrance.executor.impl.EsEngineExecutorImpl
 import com.webank.wedatasphere.linkis.entrance.persistence.EntranceResultSetEngine
 import com.webank.wedatasphere.linkis.protocol.constants.TaskConstant
 import com.webank.wedatasphere.linkis.protocol.engine.{JobProgressInfo, RequestTask}
@@ -99,7 +99,9 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
 
   override def resume(): Boolean = ???
 
+  // used by EsEngineManager to correct EntranceEngine used resources(用于 EsEngineManager 修正 Engine 使用的资源)
   @volatile var isClose = false
+
   override def close(): Unit = {
     try {
       this.engineExecutor.close

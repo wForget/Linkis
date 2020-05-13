@@ -1,5 +1,6 @@
 package com.webank.wedatasphere.linkis.entrance.executor.codeparser
 
+import com.webank.wedatasphere.linkis.entrance.conf.EsEntranceConfiguration
 import org.apache.commons.lang.StringUtils
 
 import scala.collection.mutable.ArrayBuffer
@@ -25,13 +26,15 @@ class EsJsonCodeParser extends CodeParser {
 
 class EsSQLCodeParser extends CodeParser {
 
+  val SQL_FORMAT = EsEntranceConfiguration.ES_SQL_FORMAT.getValue
+
   override def parse(code: String): Array[String] = {
-    // TODO sql to request body
-    parseSql(code)
+    // sql to request body
+    parseSql(code).map(String.format(SQL_FORMAT, _))
   }
 
   val separator = ";"
-  val defaultLimit:Int = EngineConfiguration.ENGINE_DEFAULT_LIMIT.getValue
+  val defaultLimit:Int = EsEntranceConfiguration.ENGINE_DEFAULT_LIMIT.getValue
   def parseSql(code: String): Array[String] = {
     //val realCode = StringUtils.substringAfter(code, "\n")
     val codeBuffer = new ArrayBuffer[String]()
@@ -73,12 +76,7 @@ class EsSQLCodeParser extends CodeParser {
 
 object CodeParser {
 
-  private val ESSQL_CODE_PARSER = new EsSQLCodeParser
-
-  private val ESJSON_CODE_PARSER = new EsJsonCodeParser
-
-  def codeParser(runType: String) = if ("essql".equals(runType) || "sql".equals(runType)) {
-    ESSQL_CODE_PARSER
-  } else ESJSON_CODE_PARSER
+  val ESSQL_CODE_PARSER = new EsSQLCodeParser
+  val ESJSON_CODE_PARSER = new EsJsonCodeParser
 
 }

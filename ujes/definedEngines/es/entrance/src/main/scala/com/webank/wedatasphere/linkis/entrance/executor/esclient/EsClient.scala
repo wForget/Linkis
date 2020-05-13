@@ -1,10 +1,9 @@
 package com.webank.wedatasphere.linkis.entrance.executor.esclient
 
 import com.webank.wedatasphere.linkis.entrance.conf.EsEntranceConfiguration._
-import com.webank.wedatasphere.linkis.scheduler.executer.ExecuteResponse
 import com.webank.wedatasphere.linkis.server.JMap
 import org.elasticsearch.client.sniff.Sniffer
-import org.elasticsearch.client.{Cancellable, Request, Response, ResponseListener, RestClient}
+import org.elasticsearch.client.{Cancellable, Request, ResponseListener, RestClient}
 
 
 /**
