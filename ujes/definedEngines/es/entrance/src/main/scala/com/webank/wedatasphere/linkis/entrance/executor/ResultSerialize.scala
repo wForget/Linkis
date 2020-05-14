@@ -18,7 +18,7 @@ import org.elasticsearch.client.Response
  */
 trait ResultSerialize extends Logging {
 
-  def serialize(response: Response, storePath: String, alias: String): Unit
+  def serialize(response: Response, storePath: String, alias: String): String
 
 }
 
@@ -34,7 +34,7 @@ object ResultSerialize {
   val csvMapper = new CsvMapper()
 
   def getNodeDataType(node: JsonNode): DataType = node.getNodeType match {
-    case JsonNodeType.ARRAY => (ArrayType, node.as)
+    case JsonNodeType.ARRAY => ArrayType
     case JsonNodeType.BINARY => BinaryType
     case JsonNodeType.BOOLEAN => BooleanType
     case JsonNodeType.NULL => NullType
@@ -47,8 +47,8 @@ object ResultSerialize {
   }
 
   def getNodeTypeByEsType(estype: String): DataType = estype.toLowerCase match {
-    case "long" || "integer" || "short" || "byte" || "double" || "float" || "half_float" || "scaled_float" => DecimalType
-    case "text" || "keyword" => StringType
+    case "long" | "integer" | "short" | "byte" | "double" | "float" | "half_float" | "scaled_float" => DecimalType
+    case "text" | "keyword" => StringType
     case "date" => DateType
     case "binary" => BinaryType
     case _ => StringType
@@ -57,7 +57,7 @@ object ResultSerialize {
   def getNodeValue(node: JsonNode): Any = node.getNodeType match {
     case JsonNodeType.NUMBER => node.asDouble()
     case JsonNodeType.NULL => null
-    case _ => node.asText().replaceAll("\n|\t", " ")
+    case _ => node.toString().replaceAll("\n|\t", " ")
   }
 
 }

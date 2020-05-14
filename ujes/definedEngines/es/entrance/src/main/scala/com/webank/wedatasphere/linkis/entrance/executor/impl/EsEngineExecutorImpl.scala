@@ -7,7 +7,7 @@ import com.webank.wedatasphere.linkis.entrance.exception.EsConvertResponseExcept
 import com.webank.wedatasphere.linkis.entrance.executor.codeparser.CodeParser
 import com.webank.wedatasphere.linkis.entrance.executor.esclient.EsClient
 import com.webank.wedatasphere.linkis.entrance.executor.{EsEngineExecutor, ResultSerialize}
-import com.webank.wedatasphere.linkis.scheduler.executer.{ErrorExecuteResponse, ExecuteResponse, SuccessExecuteResponse}
+import com.webank.wedatasphere.linkis.scheduler.executer.{AliasOutputExecuteResponse, ErrorExecuteResponse, ExecuteResponse, SuccessExecuteResponse}
 import com.webank.wedatasphere.linkis.server.JMap
 import org.elasticsearch.client.{Cancellable, Response, ResponseListener}
 
@@ -22,9 +22,9 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
   private var codeParser: CodeParser = _
 
   override def open: Unit = {
-    runType.trim.toLowerCase match {
-      case "esjson" || "json" => CodeParser.ESJSON_CODE_PARSER
-      case "essql" || "sql" => CodeParser.ESSQL_CODE_PARSER
+    this.codeParser = runType.trim.toLowerCase match {
+      case "esjson" | "json" => CodeParser.ESJSON_CODE_PARSER
+      case "essql" | "sql" => CodeParser.ESSQL_CODE_PARSER
       case _ => CodeParser.ESJSON_CODE_PARSER
     }
   }
@@ -53,15 +53,15 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
   }
 
   // convert response to executeResponse
-  private def convertResponse(response: Response, storePath: String, alias: String): ExecuteResponse =  Utils.tryCatch{
+  private def convertResponse(response: Response, storePath: String, alias: String): ExecuteResponse =  Utils.tryCatch[ExecuteResponse]{
     if (response.getStatusLine.getStatusCode == 200) {
-      ResultSerialize.RESULT_SERIALIZE.serialize(response, storePath, alias)
-      SuccessExecuteResponse()
+      val output = ResultSerialize.RESULT_SERIALIZE.serialize(response, storePath, alias)
+      AliasOutputExecuteResponse(alias, output)
     } else {
       throw EsConvertResponseException("EsEngineExecutor convert response fail. response code: " + response.getStatusLine.getStatusCode)
     }
   } {
-    case _: Throwable => ErrorExecuteResponse("EsEngineExecutor execute fail.", t)
+    case t: Throwable => ErrorExecuteResponse("EsEngineExecutor execute fail.", t)
   }
 
   override def close: Unit = cancelable match {

@@ -3,21 +3,24 @@ import java.util
 import java.util.concurrent.atomic.AtomicLong
 
 import com.webank.wedatasphere.linkis.entrance.conf.EntranceConfiguration
+import com.webank.wedatasphere.linkis.entrance.scheduler.EntranceGroupFactory
 import com.webank.wedatasphere.linkis.protocol.config.{RequestQueryGlobalConfig, ResponseQueryConfig}
 import com.webank.wedatasphere.linkis.protocol.constants.TaskConstant
 import com.webank.wedatasphere.linkis.protocol.engine.{RequestEngine, RequestNewEngine, TimeoutRequestNewEngine}
 import com.webank.wedatasphere.linkis.protocol.utils.TaskUtils
 import com.webank.wedatasphere.linkis.rpc.Sender
 import com.webank.wedatasphere.linkis.scheduler.executer.ExecutorState
-import com.webank.wedatasphere.linkis.scheduler.queue.Job
+import com.webank.wedatasphere.linkis.scheduler.queue.{GroupFactory, Job}
 import com.webank.wedatasphere.linkis.server.JMap
+
+import scala.collection.JavaConverters._
 
 /**
  *
  * @author wang_zh
  * @date 2020/5/11
  */
-class EsEngineRequester extends EngineRequester {
+class EsEngineRequester(groupFactory: GroupFactory) extends EngineRequester {
 
   private val idGenerator = new AtomicLong(0)
 
@@ -26,18 +29,20 @@ class EsEngineRequester extends EngineRequester {
       val requestEngine = createRequestEngine(job);
 
       // TODO request resource manager
-
-      val engine = new EsEntranceEngine(idGenerator.incrementAndGet(), requestEngine.properties)
+      val engine = new EsEntranceEngine(idGenerator.incrementAndGet(), new util.HashMap[String, String](requestEngine.properties))
       engine.setGroup(groupFactory.getOrCreateGroup(getGroupName(requestEngine.creator, requestEngine.user)))
       engine.setUser(requestEngine.user)
       engine.setCreator(requestEngine.creator)
       engine.updateState(ExecutorState.Starting, ExecutorState.Idle, null, null)
       engine.setJob(job)
       engine.init()
-      engine
+      Option(engine)
+
     }
     case _ => null
   }
+
+  private def getGroupName(creator: String, user: String): String = EntranceGroupFactory.getGroupName(creator, user)
 
   override protected def createRequestEngine(job: Job): RequestEngine = job match {
     case entranceJob: EntranceJob =>
@@ -53,12 +58,12 @@ class EsEngineRequester extends EngineRequester {
         val startupMap = TaskUtils.getStartupMap(entranceJob.getParams)
         val runtimeMap = TaskUtils.getRuntimeMap(entranceJob.getParams)
         val properties = new JMap[String, String]
-        startupMap.foreach {case (k, v) => if(v != null) properties.put(k, v.toString)}
-        runtimeMap.foreach {case (k, v) => if(v != null) properties.put(k, v.toString)}
+        startupMap.forEach {case (k, v) => if(v != null) properties.put(k, v.toString)}
+        runtimeMap.forEach {case (k, v) => if(v != null) properties.put(k, v.toString)}
         properties
       }
 
-      val runType:String = entranceJob.getParams.get(TaskConstant.RUNTYPE).asInstanceOf[String]
+      val runType:String = entranceJob.getParams.getOrDefault(TaskConstant.RUNTYPE, "esjson").asInstanceOf[String]
       properties.put(TaskConstant.RUNTYPE, runType)
 
       properties.put(RequestEngine.REQUEST_ENTRANCE_INSTANCE, Sender.getThisServiceInstance.getApplicationName + "," + Sender.getThisServiceInstance.getInstance)

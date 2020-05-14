@@ -19,9 +19,35 @@ trait CodeParser {
 class EsJsonCodeParser extends CodeParser {
 
   def parse(code: String): Array[String] = {
-    // TODO parse json code
-  }
+    // parse json code
+    val codeBuffer = new ArrayBuffer[String]()
+    val statementBuffer = new ArrayBuffer[Char]()
 
+    var status = 0
+    var isBegin = false
+    code.trim.chars().forEach{
+      case '{' => {
+        if (status == 0) isBegin = true
+        status -= 1
+        statementBuffer.append('{')
+      }
+      case '}' => {
+        status += 1
+        statementBuffer.append('}')
+      }
+      case char: Int => if (status == 0 && isBegin && !statementBuffer.isEmpty) {
+        codeBuffer.append(new String(statementBuffer.toArray))
+        statementBuffer.clear()
+        isBegin = false
+      } else {
+        statementBuffer.append(char.toChar)
+      }
+    }
+
+    if(statementBuffer.nonEmpty) codeBuffer.append(new String(statementBuffer.toArray))
+
+    codeBuffer.toArray
+  }
 }
 
 class EsSQLCodeParser extends CodeParser {

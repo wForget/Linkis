@@ -1,7 +1,9 @@
 package com.webank.wedatasphere.linkis.entrance.conf
 
+import com.webank.wedatasphere.linkis.common.utils.Logging
 import com.webank.wedatasphere.linkis.entrance.annotation._
 import com.webank.wedatasphere.linkis.entrance.execute._
+import com.webank.wedatasphere.linkis.entrance.execute.impl.EngineRequesterImpl
 import com.webank.wedatasphere.linkis.resourcemanager.domain.ModuleInfo
 import com.webank.wedatasphere.linkis.resourcemanager.{InstanceResource, ResourceRequestPolicy}
 import com.webank.wedatasphere.linkis.rpc.Sender
@@ -10,7 +12,7 @@ import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.context.annotation.{Bean, Configuration}
 
 @Configuration
-class EsSpringConfiguration {
+class EsSpringConfiguration extends Logging{
 
   @EntranceExecutorManagerBeanAnnotation
   def generateEntranceExecutorManager(@GroupFactoryBeanAnnotation.GroupFactoryAutowiredAnnotation groupFactory: GroupFactory,
@@ -21,8 +23,11 @@ class EsSpringConfiguration {
                                       @Autowired entranceExecutorRulers: Array[EntranceExecutorRuler]): EntranceExecutorManager =
     new EsEntranceExecutorManager(groupFactory, engineBuilder, engineRequester, engineSelector, engineManager, entranceExecutorRulers)
 
+  @EngineRequesterBeanAnnotation
+  def generateEngineRequester(@GroupFactoryBeanAnnotation.GroupFactoryAutowiredAnnotation groupFactory: GroupFactory) = new EsEngineRequester(groupFactory)
 
-  @Bean("resources")
+
+  @Bean(Array("resources"))
   def createResource(): ModuleInfo = {
     val totalResource = new InstanceResource(EsEntranceConfiguration.ENTRANCE_MAX_JOB_INSTANCE.getValue)
     val protectResource = new InstanceResource(EsEntranceConfiguration.ENTRANCE_PROTECTED_JOB_INSTANCE.getValue)

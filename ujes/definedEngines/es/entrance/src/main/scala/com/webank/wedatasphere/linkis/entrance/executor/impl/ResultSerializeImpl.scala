@@ -17,7 +17,7 @@ import org.apache.http.entity.ContentType
 import org.apache.http.util.EntityUtils
 import org.elasticsearch.client.Response
 
-import scala.collection.JavaConversions._
+import scala.collection.JavaConverters._
 import scala.collection.mutable.ArrayBuffer
 
 /**
@@ -27,7 +27,7 @@ import scala.collection.mutable.ArrayBuffer
  */
 class ResultSerializeImpl extends ResultSerialize {
 
-  override def serialize(response: Response, storePath: String, alias: String): Unit = {
+  override def serialize(response: Response, storePath: String, alias: String): String = {
     val contentType = ContentType.get(response.getEntity).getMimeType.toLowerCase
     val charSet = ContentType.get(response.getEntity).getCharset match {
       case c: Charset => c
@@ -64,12 +64,11 @@ class ResultSerializeImpl extends ResultSerialize {
     }
 
     if (jsonNode == null) {
-      writeText(new String(contentBytes, charSet), storePath, alias)
-      return
+      return writeText(new String(contentBytes, charSet), storePath, alias)
     }
 
     var isTable = false
-    val columns = ArrayBuffer()
+    val columns = ArrayBuffer[Column]()
     val records = new ArrayBuffer[TableRecord]
 
     // es json runType response
@@ -80,18 +79,32 @@ class ResultSerializeImpl extends ResultSerialize {
         columns += Column("_type", StringType, "")
         columns += Column("_id", StringType, "")
         columns += Column("_score", DoubleType, "")
-        hits.map {
+        hits.forEach {
           case obj: ObjectNode => {
-            val lineValues = new ArrayBuffer(columns.size)[Any]
-            obj.fields().foreach(entry => {
+            val lineValues = ArrayBuffer[Any]("", "", "", 0.0)
+            obj.fields().forEachRemaining(entry => {
               val key = entry.getKey
               val value = entry.getValue
-              val index = columns.indexWhere(_.columnName.endsWith(key))
-              if (index < 0) {
-                columns += Column(key, getNodeDataType(value), "")
-                lineValues += getNodeValue(value)
+              if ("_source".equals(key.trim)) {
+                value.fields().forEachRemaining(sourceEntry => {
+                  val sourcekey = sourceEntry.getKey
+                  val sourcevalue = sourceEntry.getValue
+                  val index = columns.indexWhere(_.columnName.equals(sourcekey))
+                  if (index < 0) {
+                    columns += Column(sourcekey, getNodeDataType(sourcevalue), "")
+                    lineValues += getNodeValue(sourcevalue)
+                  } else {
+                    lineValues(index) = getNodeValue(sourcevalue)
+                  }
+                })
               } else {
-                lineValues.set(index, getNodeValue(value))
+                val index = columns.indexWhere(_.columnName.equals(key))
+                if (index < 0) {
+                  columns += Column(key, getNodeDataType(value), "")
+                  lineValues += getNodeValue(value)
+                } else {
+                  lineValues(index) = getNodeValue(value)
+                }
               }
             })
             records += new TableRecord(lineValues.toArray)
@@ -107,47 +120,49 @@ class ResultSerializeImpl extends ResultSerialize {
       case rows: ArrayNode => {
         isTable = true
         jsonNode.get("columns").asInstanceOf[ArrayNode]
-          .foreach(node => {
+          .forEach(node => {
             val name = node.get("name").asText()
             val estype = node.get("type").asText().trim
             columns += Column(name, getNodeTypeByEsType(estype), "")
           })
-        rows.map {
+        rows.forEach {
           case row: ArrayNode => {
-            val lineValues = new ArrayBuffer()[Any]
-            row.foreach(lineValues += getNodeValue(_))
+            val lineValues = new ArrayBuffer[Any]()
+            row.forEach(node => lineValues += getNodeValue(node))
             records += new TableRecord(lineValues.toArray)
           }
           case _ =>
         }
-      }.toArray
+      }
       case _ =>
     }
 
     // write result
     if (isTable) {
-      writeTable(new TableMetaData(columns), records, storePath, alias)
+      writeTable(new TableMetaData(columns.toArray), records, storePath, alias)
     } else {
       writeText(new String(contentBytes, charSet), storePath, alias)
     }
   }
 
-  def writeText(content: String, storePath: String, alias: String): Unit = {
+  def writeText(content: String, storePath: String, alias: String): String = {
     val resultSet = ResultSetFactory.getInstance.getResultSetByType(ResultSetFactory.TEXT_TYPE)
     val resultSetPath = resultSet.getResultSetPath(new FsPath(storePath), alias)
     val writer = ResultSetWriter.getResultSetWriter(resultSet, EsEntranceConfiguration.ENGINE_RESULT_SET_MAX_CACHE.getValue.toLong, resultSetPath)
     writer.addMetaData(null)
-    content.split("\\n").foreach(writer.addRecord(new LineRecord(_)))
+    content.split("\\n").foreach(item => writer.addRecord(new LineRecord(item)))
     writer.close()
+    writer.toString()
   }
 
-  def writeTable(metaData: TableMetaData, records: ArrayBuffer[TableRecord], storePath: String, alias: String): Unit = {
+  def writeTable(metaData: TableMetaData, records: ArrayBuffer[TableRecord], storePath: String, alias: String): String = {
     val resultSet = ResultSetFactory.getInstance.getResultSetByType(ResultSetFactory.TABLE_TYPE)
     val resultSetPath = resultSet.getResultSetPath(new FsPath(storePath), alias)
     val writer = ResultSetWriter.getResultSetWriter(resultSet, EsEntranceConfiguration.ENGINE_RESULT_SET_MAX_CACHE.getValue.toLong, resultSetPath)
     writer.addMetaData(metaData)
     records.foreach(writer.addRecord)
     writer.close()
+    writer.toString()
   }
 
 }

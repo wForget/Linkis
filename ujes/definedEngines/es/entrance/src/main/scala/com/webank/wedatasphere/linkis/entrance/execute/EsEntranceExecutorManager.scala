@@ -22,10 +22,10 @@ class EsEntranceExecutorManager(groupFactory: GroupFactory,
       val newEngine = getOrCreateEngineRequester().request(job)
       newEngine.foreach(initialEntranceEngine)
       newEngine.orNull
-    case _ => None
+    case _ => null
   }
 
-  override def askExecutor(schedulerEvent: SchedulerEvent): Option[Executor] = event match{
+  override def askExecutor(schedulerEvent: SchedulerEvent): Option[Executor] = schedulerEvent match{
     case event: SchedulerEvent =>
       Some(createExecutor(event))
     case _ => None

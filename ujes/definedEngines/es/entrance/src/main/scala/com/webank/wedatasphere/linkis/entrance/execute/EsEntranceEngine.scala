@@ -1,5 +1,6 @@
 package com.webank.wedatasphere.linkis.entrance.execute
 
+import com.webank.wedatasphere.linkis.common.ServiceInstance
 import com.webank.wedatasphere.linkis.entrance.executor.EsEngineExecutor
 import com.webank.wedatasphere.linkis.entrance.executor.esclient.{EsClient, EsClientFactory}
 import com.webank.wedatasphere.linkis.entrance.executor.impl.EsEngineExecutorImpl
@@ -26,6 +27,9 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
   private var totalCodeLineNumber: Int = 0
   private var codeLine = 0
 
+
+  override def getModuleInstance: ServiceInstance = ServiceInstance("EsEntranceEngine", "")
+
   private var job: Job = _
   def setJob(job: Job) = this.job = job
 
@@ -50,14 +54,13 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
             case aliasOutputExecuteResponse: AliasOutputExecuteResponse =>
               persistEngine.persistResultSet(job, aliasOutputExecuteResponse)
             case SuccessExecuteResponse() =>
-              LOG.info(s"sql execute successfully : ${code}")
+              info(s"sql execute successfully : ${code}")
             case IncompleteExecuteResponse(_) =>
-              LOG.error(s"sql execute failed : ${code}")
+              error(s"sql execute failed : ${code}")
             case e: ErrorExecuteResponse =>
               error(s"execute code $code failed!", e.t)
-              return response
             case _ =>
-              LOG.warn("no matching exception")
+              warn("no matching exception")
           }
           codeLine = codeLine + 1
         } catch {
@@ -72,14 +75,15 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
     SuccessExecuteResponse()
   }
 
-  protected def executeLine(code: String): ExecuteResponse = this.engineExecutor.executeLine(code, storePath, codeLine)
+  protected def executeLine(code: String): ExecuteResponse = this.engineExecutor.executeLine(code, storePath, codeLine.toString)
 
   override protected def callExecute(request: RequestTask): EngineExecuteAsynReturn = ???
 
   def init(): Unit = {
     this.client = EsClientFactory.getRestClient(properties)
-    this.runType = this.properties.getOrDefault(TaskConstant.RUNTYPE, "essql")
+    this.runType = this.properties.getOrDefault(TaskConstant.RUNTYPE, "esjson")
     this.engineExecutor = new EsEngineExecutorImpl(this.runType, this.client, properties)
+    this.engineExecutor.open
   }
 
 
@@ -93,11 +97,17 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
 
   override def log(): String = "Es Engine is running"
 
-  override def kill(): Boolean = this.close()
+  override def kill(): Boolean = {
+    this.close()
+    true
+  }
 
   override def pause(): Boolean = ???
 
   override def resume(): Boolean = ???
+
+
+  override def toString: String = s"EsEntranceEngine($id)"
 
   // used by EsEngineManager to correct EntranceEngine used resources(用于 EsEngineManager 修正 Engine 使用的资源)
   @volatile var isClose = false
