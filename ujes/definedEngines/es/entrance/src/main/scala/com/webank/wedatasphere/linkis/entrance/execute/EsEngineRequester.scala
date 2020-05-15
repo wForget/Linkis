@@ -34,7 +34,7 @@ class EsEngineRequester(groupFactory: GroupFactory) extends EngineRequester {
       engine.setUser(requestEngine.user)
       engine.setCreator(requestEngine.creator)
       engine.updateState(ExecutorState.Starting, ExecutorState.Idle, null, null)
-      engine.setJob(job)
+      engine.setJob(entranceJob)
       engine.init()
       Option(engine)
 
@@ -65,6 +65,7 @@ class EsEngineRequester(groupFactory: GroupFactory) extends EngineRequester {
 
       val runType:String = entranceJob.getParams.getOrDefault(TaskConstant.RUNTYPE, "esjson").asInstanceOf[String]
       properties.put(TaskConstant.RUNTYPE, runType)
+      properties.put(TaskConstant.UMUSER, entranceJob.getUser)
 
       properties.put(RequestEngine.REQUEST_ENTRANCE_INSTANCE, Sender.getThisServiceInstance.getApplicationName + "," + Sender.getThisServiceInstance.getInstance)
       RequestNewEngine(entranceJob.getCreator, entranceJob.getUser, properties)

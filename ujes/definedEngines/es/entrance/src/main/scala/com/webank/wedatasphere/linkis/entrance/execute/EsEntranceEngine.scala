@@ -1,6 +1,7 @@
 package com.webank.wedatasphere.linkis.entrance.execute
 
 import com.webank.wedatasphere.linkis.common.ServiceInstance
+import com.webank.wedatasphere.linkis.common.log.LogUtils
 import com.webank.wedatasphere.linkis.entrance.executor.EsEngineExecutor
 import com.webank.wedatasphere.linkis.entrance.executor.esclient.{EsClient, EsClientFactory}
 import com.webank.wedatasphere.linkis.entrance.executor.impl.EsEngineExecutorImpl
@@ -8,9 +9,9 @@ import com.webank.wedatasphere.linkis.entrance.persistence.EntranceResultSetEngi
 import com.webank.wedatasphere.linkis.protocol.constants.TaskConstant
 import com.webank.wedatasphere.linkis.protocol.engine.{JobProgressInfo, RequestTask}
 import com.webank.wedatasphere.linkis.scheduler.executer.{AliasOutputExecuteResponse, ErrorExecuteResponse, ExecuteRequest, ExecuteResponse, IncompleteExecuteResponse, SingleTaskInfoSupport, SingleTaskOperateSupport, SuccessExecuteResponse}
-import com.webank.wedatasphere.linkis.scheduler.queue.Job
 import com.webank.wedatasphere.linkis.server.JMap
 import org.apache.commons.lang.StringUtils
+import org.apache.commons.lang.exception.ExceptionUtils
 
 /**
  *
@@ -30,8 +31,8 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
 
   override def getModuleInstance: ServiceInstance = ServiceInstance("EsEntranceEngine", "")
 
-  private var job: Job = _
-  def setJob(job: Job) = this.job = job
+  private var job: EntranceJob = _
+  def setJob(job: EntranceJob) = this.job = job
 
   override def execute(executeRequest: ExecuteRequest): ExecuteResponse =  {
     if (StringUtils.isEmpty(executeRequest.code)) {
@@ -54,18 +55,21 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
             case aliasOutputExecuteResponse: AliasOutputExecuteResponse =>
               persistEngine.persistResultSet(job, aliasOutputExecuteResponse)
             case SuccessExecuteResponse() =>
-              info(s"sql execute successfully : ${code}")
+              info(s"execute execute successfully : ${code}")
             case IncompleteExecuteResponse(_) =>
-              error(s"sql execute failed : ${code}")
+              error(s"execute execute failed : ${code}")
+              job.getLogListener.foreach(_.onLogUpdate(job,  LogUtils.generateERROR( s"execute execute failed : ${code}")))
             case e: ErrorExecuteResponse =>
               error(s"execute code $code failed!", e.t)
+              job.getLogListener.foreach(_.onLogUpdate(job,  LogUtils.generateERROR( s"execute code $code failed!" + ExceptionUtils.getFullStackTrace(e.t))))
             case _ =>
               warn("no matching exception")
+              job.getLogListener.foreach(_.onLogUpdate(job,  LogUtils.generateERROR( "no matching exception")))
           }
           codeLine = codeLine + 1
         } catch {
           case t: Throwable =>
-            return ErrorExecuteResponse("EsEntranceEngine execute exception, ", t)
+            return ErrorExecuteResponse("EsEntranceEngine ,execute exception ", t)
         } finally {
 
         }
@@ -114,8 +118,9 @@ class EsEntranceEngine(id: Long, properties: JMap[String, String]) extends Entra
 
   override def close(): Unit = {
     try {
-      this.engineExecutor.close
+      this.job.setResultSize(0)
 
+      this.engineExecutor.close
       // TODO 释放资源
 
     } catch {

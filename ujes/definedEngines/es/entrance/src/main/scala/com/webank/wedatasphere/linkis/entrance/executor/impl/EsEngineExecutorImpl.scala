@@ -3,12 +3,15 @@ package com.webank.wedatasphere.linkis.entrance.executor.impl
 import java.util.concurrent.CountDownLatch
 
 import com.webank.wedatasphere.linkis.common.utils.Utils
+import com.webank.wedatasphere.linkis.entrance.conf.EsEntranceConfiguration
 import com.webank.wedatasphere.linkis.entrance.exception.EsConvertResponseException
 import com.webank.wedatasphere.linkis.entrance.executor.codeparser.CodeParser
 import com.webank.wedatasphere.linkis.entrance.executor.esclient.EsClient
-import com.webank.wedatasphere.linkis.entrance.executor.{EsEngineExecutor, ResultSerialize}
+import com.webank.wedatasphere.linkis.entrance.executor.{EsEngineExecutor, ResponseHandler}
+import com.webank.wedatasphere.linkis.protocol.constants.TaskConstant
 import com.webank.wedatasphere.linkis.scheduler.executer.{AliasOutputExecuteResponse, ErrorExecuteResponse, ExecuteResponse, SuccessExecuteResponse}
 import com.webank.wedatasphere.linkis.server.JMap
+import com.webank.wedatasphere.linkis.storage.utils.StorageUtils
 import org.elasticsearch.client.{Cancellable, Response, ResponseListener}
 
 /**
@@ -20,13 +23,19 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
 
   private var cancelable: Cancellable = _
   private var codeParser: CodeParser = _
+  private var user: String = _
 
   override def open: Unit = {
     this.codeParser = runType.trim.toLowerCase match {
       case "esjson" | "json" => CodeParser.ESJSON_CODE_PARSER
-      case "essql" | "sql" => CodeParser.ESSQL_CODE_PARSER
+      case "essql" | "sql" => {
+        // set default sql endpoint
+        properties.putIfAbsent(EsEntranceConfiguration.ES_HTTP_ENDPOINT.key, EsEntranceConfiguration.ES_HTTP_SQL_ENDPOINT.getValue)
+        CodeParser.ESSQL_CODE_PARSER
+      }
       case _ => CodeParser.ESJSON_CODE_PARSER
     }
+    this.user = properties.get(TaskConstant.UMUSER, StorageUtils.getJvmUser)
   }
 
   override def parse(code: String): Array[String] = {
@@ -35,7 +44,7 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
 
   override def executeLine(code: String, storePath: String, alias: String): ExecuteResponse = {
     val realCode = code.trim()
-    info(s"es client begins to run jdbc code:\n ${realCode.trim}")
+    info(s"es client begins to run $runType code:\n ${realCode.trim}")
     val countDown = new CountDownLatch(1)
     var executeResponse: ExecuteResponse  = SuccessExecuteResponse()
     cancelable = client.execute(realCode, properties, new ResponseListener {
@@ -55,7 +64,7 @@ class EsEngineExecutorImpl(runType:String, client: EsClient, properties: JMap[St
   // convert response to executeResponse
   private def convertResponse(response: Response, storePath: String, alias: String): ExecuteResponse =  Utils.tryCatch[ExecuteResponse]{
     if (response.getStatusLine.getStatusCode == 200) {
-      val output = ResultSerialize.RESULT_SERIALIZE.serialize(response, storePath, alias)
+      val output = ResponseHandler.RESPONSE_HANDLER.handle(response, storePath, alias, this.user)
       AliasOutputExecuteResponse(alias, output)
     } else {
       throw EsConvertResponseException("EsEngineExecutor convert response fail. response code: " + response.getStatusLine.getStatusCode)

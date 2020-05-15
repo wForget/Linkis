@@ -17,7 +17,8 @@ object EsEntranceConfiguration {
   val ES_PASSWORD = CommonVars("wds.linkis.es.password", "")
   val ES_SNIFFER_ENABLE = CommonVars("wds.linkis.es.sniffer.enable", true)
   val ES_HTTP_METHOD = CommonVars("wds.linkis.es.http.method", "GET")
-  val ES_HTTP_ENDPOINT = CommonVars("wds.linkis.es.http.endpoint", "/")
+  val ES_HTTP_ENDPOINT = CommonVars("wds.linkis.es.http.endpoint", "/_search")
+  val ES_HTTP_SQL_ENDPOINT = CommonVars("wds.linkis.es.sql.endpoint", "/_sql")
   val ES_SQL_FORMAT = CommonVars("wds.linkis.es.sql.format", "{\"query\": \"%s\"}")
   val ES_HTTP_HEADER_PREFIX = "wds.linkis.es.headers."
 

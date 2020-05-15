@@ -27,7 +27,14 @@ class EsJsonCodeParser extends CodeParser {
     var isBegin = false
     code.trim.chars().forEach{
       case '{' => {
-        if (status == 0) isBegin = true
+        if (status == 0) {
+          if (isBegin && !statementBuffer.isEmpty) {
+            codeBuffer.append(new String(statementBuffer.toArray))
+            statementBuffer.clear()
+          } else {
+            isBegin = true
+          }
+        }
         status -= 1
         statementBuffer.append('{')
       }
