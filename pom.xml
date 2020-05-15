@@ -115,6 +115,7 @@
         <module>ujes/definedEngines/mlsql/entrance</module>
         <module>assembly/public-module</module>
         <module>assembly</module>
+        <module>ujes/definedEngines/es/entrance</module>
 
     </modules>
 
