@@ -12,6 +12,7 @@ import com.webank.wedatasphere.linkis.engineconn.core.EngineConnObject
 import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.conf.ElasticSearchConfiguration
 import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.executer.client.ElasticSearchExecutor
 import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.executer.parser.ElasticSearchCombinedCodeParser
+import com.webank.wedatasphere.linkis.governance.common.entity.ExecutionNodeStatus
 import com.webank.wedatasphere.linkis.governance.common.protocol.task.RequestTask
 import com.webank.wedatasphere.linkis.manager.common.entity.resource.{CommonNodeResource, LoadResource, NodeResource}
 import com.webank.wedatasphere.linkis.manager.engineplugin.common.conf.EngineConnPluginConf
@@ -110,6 +111,13 @@ class ElasticSearchEngineConnExecutor(override val outputPrintLimit: Int, val id
     elasticSearchExecutorCache.asMap()
       .values().asScala
       .foreach(e => e.close)
+  }
+
+  override def transformTaskStatus(task: EngineConnTask, newStatus: ExecutionNodeStatus): Unit = {
+    if (ExecutionNodeStatus.isCompleted(newStatus)) {
+      elasticSearchExecutorCache.invalidate(task.getTaskId)
+    }
+    super.transformTaskStatus(task, newStatus)
   }
 
   private def getRunTypeLabel(): EngineRunTypeLabel = {
