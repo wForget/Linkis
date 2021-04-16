@@ -236,8 +236,8 @@ abstract class ComputationExecutor(val outputPrintLimit: Int = 1000) extends Acc
   def killTask(taskId: String): Unit = {
     Utils.tryAndWarn {
       val task = taskCache.getIfPresent(taskId)
-      task.setStatus(ExecutionNodeStatus.Cancelled)
       if (null != task) {
+        task.setStatus(ExecutionNodeStatus.Cancelled)
         transformTaskStatus(task, ExecutionNodeStatus.Cancelled)
       }
     }

@@ -44,4 +44,9 @@ abstract class ConcurrentComputationExecutor(override val outputPrintLimit: Int 
   protected override  def ensureOp[A](f: => A): A = if (!isEngineInitialized)
     f
   else ensureIdle(f, false)
+
+  override def close(): Unit = {
+    killAll()
+    super.close()
+  }
 }

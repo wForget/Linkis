@@ -20,8 +20,7 @@ import java.util.concurrent.CountDownLatch
 import com.webank.wedatasphere.linkis.common.utils.Utils
 import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.conf.ElasticSearchConfiguration
 import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.exception.EsConvertResponseException
-import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.executer.client.{EsClient, ResponseHandler}
-import com.webank.wedatasphere.linkis.entrance.executor.ElasticSearchExecutor
+import com.webank.wedatasphere.linkis.engineplugin.elasticsearch.executer.client.{ElasticSearchExecutor, EsClient, EsClientFactory, ResponseHandler}
 import com.webank.wedatasphere.linkis.protocol.constants.TaskConstant
 import com.webank.wedatasphere.linkis.scheduler.executer.{AliasOutputExecuteResponse, ErrorExecuteResponse, ExecuteResponse, SuccessExecuteResponse}
 import com.webank.wedatasphere.linkis.server.JMap
@@ -33,12 +32,15 @@ import org.elasticsearch.client.{Cancellable, Response, ResponseListener}
  * @author wang_zh
  * @date 2020/5/11
  */
-class ElasticSearchExecutorImpl(runType:String, client: EsClient, properties: JMap[String, String]) extends ElasticSearchExecutor {
+class ElasticSearchExecutorImpl(runType:String, storePath: String, properties: JMap[String, String]) extends ElasticSearchExecutor {
 
+  private var client: EsClient = _
   private var cancelable: Cancellable = _
   private var user: String = _
 
+
   override def open: Unit = {
+    this.client = EsClientFactory.getRestClient(properties)
     this.user = properties.getOrDefault(TaskConstant.UMUSER, StorageUtils.getJvmUser)
     runType.trim.toLowerCase match {
       case "essql" | "sql" =>
@@ -47,7 +49,7 @@ class ElasticSearchExecutorImpl(runType:String, client: EsClient, properties: JM
     }
   }
 
-  override def executeLine(code: String, storePath: String, alias: String): ExecuteResponse = {
+  override def executeLine(code: String, alias: String): ExecuteResponse = {
     val realCode = code.trim()
     info(s"es client begins to run $runType code:\n ${realCode.trim}")
     val countDown = new CountDownLatch(1)

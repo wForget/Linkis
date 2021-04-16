@@ -18,11 +18,13 @@ object ElasticSearchConfiguration {
   val ES_HTTP_HEADER_PREFIX = "wds.linkis.es.headers."
 
   // entrance resource
-  val ENTRANCE_MAX_JOB_INSTANCE = CommonVars("wds.linkis.presto.max.job.instance", 100)
-  val ENTRANCE_PROTECTED_JOB_INSTANCE = CommonVars("wds.linkis.presto.protected.job.instance", 20)
-  val ENGINE_DEFAULT_LIMIT = CommonVars("wds.linkis.presto.default.limit", 5000)
+  val ENTRANCE_MAX_JOB_INSTANCE = CommonVars("wds.linkis.es.max.job.instance", 100)
+  val ENTRANCE_PROTECTED_JOB_INSTANCE = CommonVars("wds.linkis.es.protected.job.instance", 20)
+  val ENGINE_DEFAULT_LIMIT = CommonVars("wds.linkis.es.default.limit", 5000)
 
   // resultSet
   val ENGINE_RESULT_SET_MAX_CACHE = CommonVars("wds.linkis.resultSet.cache.max", new ByteType("512k"))
+
+  val ENGINE_CONCURRENT_LIMIT = CommonVars[Int]("wds.linkis.engineconn.es.concurrent.limit", 100)
 
 }
