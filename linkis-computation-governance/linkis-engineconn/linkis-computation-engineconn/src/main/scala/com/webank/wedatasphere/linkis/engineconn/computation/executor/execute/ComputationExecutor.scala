@@ -45,7 +45,7 @@ abstract class ComputationExecutor(val outputPrintLimit: Int = 1000) extends Acc
   private val listenerBusContext = ExecutorListenerBusContext.getExecutorListenerBusContext
 
   //  private val taskMap: util.Map[String, EngineConnTask] = new ConcurrentHashMap[String, EngineConnTask](8)
-  private val taskCache: Cache[String, EngineConnTask] = CacheBuilder.newBuilder().expireAfterAccess(EngineConnConf.ENGINE_TASK_EXPIRE_TIME.getValue, TimeUnit.MILLISECONDS)
+  protected val taskCache: Cache[String, EngineConnTask] = CacheBuilder.newBuilder().expireAfterAccess(EngineConnConf.ENGINE_TASK_EXPIRE_TIME.getValue, TimeUnit.MILLISECONDS)
     .maximumSize(EngineConnConstant.MAX_TASK_NUM).build()
 
   private var engineInitialized: Boolean = false

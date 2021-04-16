@@ -25,6 +25,6 @@ object ElasticSearchConfiguration {
   // resultSet
   val ENGINE_RESULT_SET_MAX_CACHE = CommonVars("wds.linkis.resultSet.cache.max", new ByteType("512k"))
 
-  val ENGINE_CONCURRENT_LIMIT = CommonVars[Int]("wds.linkis.engineconn.es.concurrent.limit", 100)
+  val ENGINE_CONCURRENT_LIMIT = CommonVars[Int]("wds.linkis.engineconn.concurrent.limit", 100)
 
 }

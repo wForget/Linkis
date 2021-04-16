@@ -60,9 +60,7 @@ class ElasticSearchEngineConnExecutor(override val outputPrintLimit: Int, val id
 
   override def executeCompletely(engineExecutorContext: EngineExecutionContext, code: String, completedLine: String): ExecuteResponse = null
 
-  override def progress(): Float = {
-    0
-  }
+  override def progress(): Float = 0.0f
 
   override def getProgressInfo: Array[JobProgressInfo] = Array.empty[JobProgressInfo]
 
@@ -111,6 +109,7 @@ class ElasticSearchEngineConnExecutor(override val outputPrintLimit: Int, val id
     elasticSearchExecutorCache.asMap()
       .values().asScala
       .foreach(e => e.close)
+    super.killAll()
   }
 
   override def transformTaskStatus(task: EngineConnTask, newStatus: ExecutionNodeStatus): Unit = {
