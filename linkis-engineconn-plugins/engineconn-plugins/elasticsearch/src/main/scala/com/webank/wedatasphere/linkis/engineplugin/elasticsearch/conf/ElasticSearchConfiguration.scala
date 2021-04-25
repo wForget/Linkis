@@ -27,4 +27,6 @@ object ElasticSearchConfiguration {
 
   val ENGINE_CONCURRENT_LIMIT = CommonVars[Int]("wds.linkis.engineconn.concurrent.limit", 100)
 
+  val DEFAULT_VERSION = CommonVars[String]("wds.linkis.engineconn.io.version", "7.6.2")
+
 }

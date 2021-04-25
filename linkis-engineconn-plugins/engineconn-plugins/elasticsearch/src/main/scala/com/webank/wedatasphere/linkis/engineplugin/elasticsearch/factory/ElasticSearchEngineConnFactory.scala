@@ -10,7 +10,7 @@ class ElasticSearchEngineConnFactory extends MultiExecutorEngineConnFactory with
 
   override def createEngineConn(engineCreationContext: EngineCreationContext): EngineConn = {
     val engineConn = new DefaultEngineConn(engineCreationContext)
-    engineConn.setEngineType(EngineType.ES.toString)
+    engineConn.setEngineType(EngineType.ELASTICSEARCH.toString)
     engineConn
   }
 

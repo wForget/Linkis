@@ -25,7 +25,7 @@
         <format>zip</format>
     </formats>
     <includeBaseDirectory>true</includeBaseDirectory>
-    <baseDirectory>hive</baseDirectory>
+    <baseDirectory>elasticsearch</baseDirectory>
 
     <dependencySets>
         <dependencySet>
