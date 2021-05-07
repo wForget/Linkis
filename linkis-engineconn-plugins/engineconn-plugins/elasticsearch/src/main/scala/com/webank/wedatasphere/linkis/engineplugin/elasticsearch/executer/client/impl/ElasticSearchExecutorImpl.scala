@@ -46,6 +46,7 @@ class ElasticSearchExecutorImpl(runType:String, storePath: String, properties: J
       case "essql" | "sql" =>
         properties.putIfAbsent(ElasticSearchConfiguration.ES_HTTP_ENDPOINT.key,
           ElasticSearchConfiguration.ES_HTTP_SQL_ENDPOINT.getValue(properties))
+      case _ =>
     }
   }
 

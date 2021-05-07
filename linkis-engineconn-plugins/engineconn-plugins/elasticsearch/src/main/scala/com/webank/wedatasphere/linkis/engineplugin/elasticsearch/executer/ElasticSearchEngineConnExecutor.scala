@@ -48,14 +48,16 @@ class ElasticSearchEngineConnExecutor(override val outputPrintLimit: Int, val id
   override def execute(engineConnTask: EngineConnTask): ExecuteResponse = {
     val runType = getRunTypeLabel().getRunType
     val storePath = engineConnTask.getProperties.get(RequestTask.RESULT_SET_STORE_PATH).toString
-    elasticSearchExecutorCache.put(engineConnTask.getTaskId,
-      ElasticSearchExecutor(runType, storePath, engineConnTask.getProperties))
+    val elasticSearchExecutor = ElasticSearchExecutor(runType, storePath, engineConnTask.getProperties)
+    elasticSearchExecutor.open
+    elasticSearchExecutorCache.put(engineConnTask.getTaskId, elasticSearchExecutor)
     super.execute(engineConnTask)
   }
 
   override def executeLine(engineExecutorContext: EngineExecutionContext, code: String): ExecuteResponse = {
-    val esExecutor = elasticSearchExecutorCache.getIfPresent(engineExecutorContext.getJobId)
-    esExecutor.executeLine(code, s"_${engineExecutorContext.getCurrentParagraph}")
+    val taskId = engineExecutorContext.getJobId.get
+    val elasticSearchExecutor = elasticSearchExecutorCache.getIfPresent(taskId)
+    elasticSearchExecutor.executeLine(code, s"_${engineExecutorContext.getCurrentParagraph}")
   }
 
   override def executeCompletely(engineExecutorContext: EngineExecutionContext, code: String, completedLine: String): ExecuteResponse = null
