@@ -20,6 +20,7 @@ import java.util
 
 import com.webank.wedatasphere.linkis.common.utils.{OverloadUtils, Utils}
 import com.webank.wedatasphere.linkis.engineconn.computation.executor.execute.{ConcurrentComputationExecutor, EngineExecutionContext}
+import com.webank.wedatasphere.linkis.engineconn.computation.executor.parser.SQLCodeParser
 import com.webank.wedatasphere.linkis.engineconn.core.EngineConnObject
 import com.webank.wedatasphere.linkis.manager.common.entity.resource.{CommonNodeResource, LoadResource, NodeResource}
 import com.webank.wedatasphere.linkis.manager.engineplugin.common.conf.EngineConnPluginConf
@@ -47,6 +48,11 @@ class JDBCEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) ex
 
   private val executorLabels: util.List[Label[_]] = new util.ArrayList[Label[_]](2)
   private var connection: Connection = null
+
+  override def init():Unit = {
+    setCodeParser(new SQLCodeParser)
+    super.init()
+  }
 
   override def executeLine(engineExecutorContext: EngineExecutionContext, code: String): ExecuteResponse = {
     val realCode = code.trim()
