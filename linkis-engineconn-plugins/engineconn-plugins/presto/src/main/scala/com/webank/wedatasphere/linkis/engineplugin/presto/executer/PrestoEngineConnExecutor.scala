@@ -62,13 +62,13 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
     val clientSession = clientSessionCache.getIfPresent(taskId)
     val statement = StatementClientFactory.newStatementClient(okHttpClient, clientSession, realCode)
 
-    initialStatusUpdates(engineExecutorContext, statement)
+    initialStatusUpdates(taskId, engineExecutorContext, statement)
 
     if (statement.isRunning || (statement.isFinished && statement.finalStatusInfo().getError == null)) {
-      queryOutput(engineExecutorContext, statement)
+      queryOutput(taskId, engineExecutorContext, statement)
     }
 
-    verifyServerError(engineExecutorContext, statement)
+    verifyServerError(taskId, engineExecutorContext, statement)
 
     // update session
     clientSessionCache.put(taskId, updateSession(clientSession, statement))
@@ -78,9 +78,9 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
 
   override def executeCompletely(engineExecutorContext: EngineExecutionContext, code: String, completedLine: String): ExecuteResponse = null
 
-  override def progress(): Float = 0.0f
+  override def progress(taskID: String): Float = 0.0f
 
-  override def getProgressInfo: Array[JobProgressInfo] = Array.empty[JobProgressInfo]
+  override def getProgressInfo(taskID: String): Array[JobProgressInfo] = Array.empty[JobProgressInfo]
 
   override def getExecutorLabels(): util.List[Label[_]] = executorLabels
 
@@ -147,15 +147,15 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
       .asInstanceOf[UserCreatorLabel]
   }
 
-  private def initialStatusUpdates(engineExecutorContext: EngineExecutionContext, statement: StatementClient): Unit = {
+  private def initialStatusUpdates(taskId: String, engineExecutorContext: EngineExecutionContext, statement: StatementClient): Unit = {
     while (statement.isRunning
       && (statement.currentData().getData == null || statement.currentStatusInfo().getUpdateType != null)) {
-      engineExecutorContext.pushProgress(progress(), getProgressInfo)
+      engineExecutorContext.pushProgress(progress(taskId), getProgressInfo(taskId))
       statement.advance()
     }
   }
 
-  private def queryOutput(engineExecutorContext: EngineExecutionContext, statement: StatementClient): Unit = {
+  private def queryOutput(taskId: String, engineExecutorContext: EngineExecutionContext, statement: StatementClient): Unit = {
     var columnCount = 0
     var rows = 0
     val resultSetWriter = engineExecutorContext.createResultSetWriter(ResultSetFactory.TABLE_TYPE)
@@ -180,7 +180,7 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
           resultSetWriter.addRecord(new TableRecord(rowArray.toArray))
           rows += 1
         }
-        engineExecutorContext.pushProgress(progress(), getProgressInfo)
+        engineExecutorContext.pushProgress(progress(taskId), getProgressInfo(taskId))
         statement.advance()
       }
     })(IOUtils.closeQuietly(resultSetWriter))
@@ -192,8 +192,8 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
   }
 
   // check presto error
-  private def verifyServerError(engineExecutorContext: EngineExecutionContext, statement: StatementClient): Unit = {
-    engineExecutorContext.pushProgress(progress(), getProgressInfo)
+  private def verifyServerError(taskId: String, engineExecutorContext: EngineExecutionContext, statement: StatementClient): Unit = {
+    engineExecutorContext.pushProgress(progress(taskId), getProgressInfo(taskId))
     if (statement.isFinished) {
       val info: QueryStatusInfo = statement.finalStatusInfo()
       if (info.getError != null) {

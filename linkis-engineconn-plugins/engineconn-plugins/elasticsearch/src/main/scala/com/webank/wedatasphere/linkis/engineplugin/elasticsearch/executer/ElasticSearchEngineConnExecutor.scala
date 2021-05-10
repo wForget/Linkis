@@ -62,9 +62,9 @@ class ElasticSearchEngineConnExecutor(override val outputPrintLimit: Int, val id
 
   override def executeCompletely(engineExecutorContext: EngineExecutionContext, code: String, completedLine: String): ExecuteResponse = null
 
-  override def progress(): Float = 0.0f
+  override def progress(taskID: String): Float = 0.0f
 
-  override def getProgressInfo: Array[JobProgressInfo] = Array.empty[JobProgressInfo]
+  override def getProgressInfo(taskID: String): Array[JobProgressInfo] = Array.empty[JobProgressInfo]
 
   override def getExecutorLabels(): util.List[Label[_]] = executorLabels
 

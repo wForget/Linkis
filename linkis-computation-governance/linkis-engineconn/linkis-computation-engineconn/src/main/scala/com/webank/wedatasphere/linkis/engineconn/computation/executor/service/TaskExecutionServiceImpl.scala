@@ -28,9 +28,9 @@ import com.webank.wedatasphere.linkis.engineconn.acessible.executor.log.LogHelpe
 import com.webank.wedatasphere.linkis.engineconn.acessible.executor.service.LockService
 import com.webank.wedatasphere.linkis.engineconn.common.conf.{EngineConnConf, EngineConnConstant}
 import com.webank.wedatasphere.linkis.engineconn.computation.executor.entity.{CommonEngineConnTask, EngineConnTask}
-import com.webank.wedatasphere.linkis.engineconn.computation.executor.execute.ComputationExecutor
+import com.webank.wedatasphere.linkis.engineconn.computation.executor.execute.{ComputationExecutor, ConcurrentComputationExecutor}
 import com.webank.wedatasphere.linkis.engineconn.computation.executor.listener.{ResultSetListener, TaskProgressListener, TaskStatusListener}
-import com.webank.wedatasphere.linkis.engineconn.computation.executor.utlis.{ComputationEngineUtils, ComputaionEngineContant}
+import com.webank.wedatasphere.linkis.engineconn.computation.executor.utlis.{ComputaionEngineContant, ComputationEngineUtils}
 import com.webank.wedatasphere.linkis.engineconn.core.executor.ExecutorManager
 import com.webank.wedatasphere.linkis.engineconn.executor.listener.ExecutorListenerBusContext
 import com.webank.wedatasphere.linkis.engineconn.executor.listener.event.EngineConnSyncEvent
@@ -175,7 +175,13 @@ class TaskExecutionServiceImpl extends TaskExecutionService with Logging with Re
         if (ExecutionNodeStatus.isCompleted(task.getStatus)) {
           response = ResponseTaskProgress(taskID, 1.0f, null)
         } else {
-          response = ResponseTaskProgress(taskID, executor.progress(), executor.getProgressInfo)
+          executor match {
+            case computationExecutor: ComputationExecutor =>
+              response = ResponseTaskProgress(taskID, computationExecutor.progress(), computationExecutor.getProgressInfo)
+            case concurrentComputationExecutor: ConcurrentComputationExecutor =>
+              response = ResponseTaskProgress(taskID, concurrentComputationExecutor.progress(taskID),
+                concurrentComputationExecutor.getProgressInfo(taskID))
+          }
         }
       } else {
         response = ResponseTaskProgress(taskID, -1, null)
