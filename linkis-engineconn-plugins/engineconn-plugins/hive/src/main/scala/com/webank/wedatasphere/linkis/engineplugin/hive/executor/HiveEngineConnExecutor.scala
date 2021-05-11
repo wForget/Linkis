@@ -291,7 +291,7 @@ class HiveEngineConnExecutor(id: Int,
   }
 
 
-  override def progress(): Float = {
+  private def progress(): Float = {
     if (engineExecutorContext != null){
       val totalSQLs = engineExecutorContext.getTotalParagraph
       val currentSQL = engineExecutorContext.getCurrentParagraph
@@ -320,7 +320,7 @@ class HiveEngineConnExecutor(id: Int,
     }else 0.0f
   }
 
-  override def getProgressInfo: Array[JobProgressInfo] = {
+  private def getProgressInfo: Array[JobProgressInfo] = {
     val arrayBuffer:ArrayBuffer[JobProgressInfo] = new ArrayBuffer[JobProgressInfo]()
     singleSqlProgressMap synchronized{
       val set = singleSqlProgressMap.keySet()
@@ -346,6 +346,10 @@ class HiveEngineConnExecutor(id: Int,
     arrayBuffer.toArray
   }
 
+
+  override def progress(taskID: String): Float = progress()
+
+  override def getProgressInfo(taskID: String): Array[JobProgressInfo] = getProgressInfo
 
   override def killTask(taskID: String): Unit = {
     LOG.info(s"hive begins to kill job with id : ${taskID}")

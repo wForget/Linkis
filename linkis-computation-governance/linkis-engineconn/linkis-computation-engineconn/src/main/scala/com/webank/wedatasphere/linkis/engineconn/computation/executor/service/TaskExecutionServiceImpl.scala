@@ -175,13 +175,7 @@ class TaskExecutionServiceImpl extends TaskExecutionService with Logging with Re
         if (ExecutionNodeStatus.isCompleted(task.getStatus)) {
           response = ResponseTaskProgress(taskID, 1.0f, null)
         } else {
-          executor match {
-            case computationExecutor: ComputationExecutor =>
-              response = ResponseTaskProgress(taskID, computationExecutor.progress(), computationExecutor.getProgressInfo)
-            case concurrentComputationExecutor: ConcurrentComputationExecutor =>
-              response = ResponseTaskProgress(taskID, concurrentComputationExecutor.progress(taskID),
-                concurrentComputationExecutor.getProgressInfo(taskID))
-          }
+          response = ResponseTaskProgress(taskID, executor.progress(taskID), executor.getProgressInfo(taskID))
         }
       } else {
         response = ResponseTaskProgress(taskID, -1, null)

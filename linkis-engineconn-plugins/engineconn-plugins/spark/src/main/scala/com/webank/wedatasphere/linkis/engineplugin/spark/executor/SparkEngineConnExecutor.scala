@@ -109,7 +109,7 @@ abstract class SparkEngineConnExecutor(val sc: SparkContext, id: Long) extends C
     executeLine(engineExecutorContext, newcode)
   }
 
-  override def progress(): Float = if (jobGroup == null || engineExecutionContext.getTotalParagraph == 0) 0
+  private def progress(): Float = if (jobGroup == null || engineExecutionContext.getTotalParagraph == 0) 0
   else {
     debug("request new progress for jobGroup is " + jobGroup + "old progress:" + oldprogress)
     val newProgress = (engineExecutionContext.getCurrentParagraph * 1f - 1f )/ engineExecutionContext.getTotalParagraph + JobProgressUtil.progress(sc,jobGroup)/engineExecutionContext.getTotalParagraph - 0.01f
@@ -119,7 +119,7 @@ abstract class SparkEngineConnExecutor(val sc: SparkContext, id: Long) extends C
     }
   }
 
-  override def getProgressInfo: Array[JobProgressInfo] = if (jobGroup == null) Array.empty
+  private def getProgressInfo: Array[JobProgressInfo] = if (jobGroup == null) Array.empty
   else {
     debug("request new progress info for jobGroup is " + jobGroup)
     val progressInfoArray = ArrayBuffer[JobProgressInfo]()
@@ -127,6 +127,10 @@ abstract class SparkEngineConnExecutor(val sc: SparkContext, id: Long) extends C
     progressInfoArray ++= JobProgressUtil.getCompletedJobProgressInfo(sc,jobGroup)
     progressInfoArray.toArray
   }
+
+  override def progress(taskID: String): Float = progress()
+
+  override def getProgressInfo(taskID: String): Array[JobProgressInfo] = getProgressInfo
 
   override def getExecutorLabels(): util.List[Label[_]] = executorLabels
 

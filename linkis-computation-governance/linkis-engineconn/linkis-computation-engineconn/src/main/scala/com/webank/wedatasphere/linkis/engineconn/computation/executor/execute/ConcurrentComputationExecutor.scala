@@ -48,14 +48,6 @@ abstract class ConcurrentComputationExecutor(override val outputPrintLimit: Int 
     f
   else ensureIdle(f, false)
 
-  override def progress(): Float = ???
-
-  override def getProgressInfo(): Array[JobProgressInfo] = ???
-
-  def progress(taskID: String): Float
-
-  def getProgressInfo(taskID: String): Array[JobProgressInfo]
-
   override def killAll(): Unit = {
     taskCache.asMap().keySet().asScala.foreach(killTask(_))
   }

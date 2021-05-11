@@ -67,7 +67,7 @@ class PythonEngineConnExecutor(id: Int, pythonSession: PythonSession, outputPrin
     executeLine(engineExecutionContext, newcode)
   }
 
-  override def progress(): Float = {
+  private def progress(): Float = {
     if (null != this.engineExecutionContext) {
       this.engineExecutionContext.getCurrentParagraph / this.engineExecutionContext.getTotalParagraph.asInstanceOf[Float]
     } else {
@@ -75,7 +75,7 @@ class PythonEngineConnExecutor(id: Int, pythonSession: PythonSession, outputPrin
     }
   }
 
-  override def getProgressInfo: Array[JobProgressInfo] = {
+  private def getProgressInfo: Array[JobProgressInfo] = {
     val jobProgressInfo = new ArrayBuffer[JobProgressInfo]()
     if (0.0f == progress()) {
       jobProgressInfo += JobProgressInfo(engineExecutionContext.getJobId.getOrElse(""), 1, 1, 0, 0)
@@ -84,6 +84,10 @@ class PythonEngineConnExecutor(id: Int, pythonSession: PythonSession, outputPrin
     }
     jobProgressInfo.toArray
   }
+
+  override def progress(taskID: String): Float = progress()
+
+  override def getProgressInfo(taskID: String): Array[JobProgressInfo] = getProgressInfo
 
   override def supportCallBackLogs(): Boolean = {
     // todo
