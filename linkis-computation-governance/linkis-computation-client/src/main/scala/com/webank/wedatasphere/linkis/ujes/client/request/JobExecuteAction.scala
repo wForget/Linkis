@@ -222,5 +222,13 @@ object JobExecuteAction {
       }
       override def getDefaultRunType: RunType = JSON
     }
+
+    val PRESTO = new EngineType {
+      override val toString: String = "presto"
+      val SQL = new RunType {
+        override val toString: String = "psql"
+      }
+      override def getDefaultRunType: RunType = SQL
+    }
   }
 }

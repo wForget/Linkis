@@ -8,7 +8,7 @@ import com.webank.wedatasphere.linkis.engineplugin.presto.factory.{PrestoEngineC
 import com.webank.wedatasphere.linkis.manager.engineplugin.common.EngineConnPlugin
 import com.webank.wedatasphere.linkis.manager.engineplugin.common.creation.EngineConnFactory
 import com.webank.wedatasphere.linkis.manager.engineplugin.common.launch.EngineConnLaunchBuilder
-import com.webank.wedatasphere.linkis.manager.engineplugin.common.resource.EngineResourceFactory
+import com.webank.wedatasphere.linkis.manager.engineplugin.common.resource.{EngineResourceFactory, GenericEngineResourceFactory}
 import com.webank.wedatasphere.linkis.manager.label.entity.Label
 
 class PrestoEngineConnPlugin extends EngineConnPlugin {
@@ -33,7 +33,8 @@ private object PrestoEngineConnPlugin {
 
   val ENGINE_LAUNCH_BUILDER = new PrestoProcessEngineConnLaunchBuilder
 
-  val ENGINE_RESOURCE_FACTORY = new PrestoEngineConnResourceFactory
+//  val ENGINE_RESOURCE_FACTORY = new PrestoEngineConnResourceFactory
+  val ENGINE_RESOURCE_FACTORY = new GenericEngineResourceFactory
 
   val ENGINE_FACTORY = new PrestoEngineConnFactory
 

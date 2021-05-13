@@ -16,7 +16,6 @@
         <presto.version>0.234</presto.version>
     </properties>
 
-
     <dependencies>
         <dependency>
             <groupId>com.webank.wedatasphere.linkis</groupId>
@@ -70,6 +69,45 @@
         </dependency>
 
     </dependencies>
+    <dependencyManagement>
+        <dependencies>
+            <dependency>
+                <artifactId>jackson-core</artifactId>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jackson-annotations</artifactId>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jackson-datatype-guava</artifactId>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jackson-datatype-jdk8</artifactId>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jackson-datatype-joda</artifactId>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jackson-datatype-jsr310</artifactId>
+                <groupId>com.fasterxml.jackson.datatype</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+            <dependency>
+                <artifactId>jackson-module-parameter-names</artifactId>
+                <groupId>com.fasterxml.jackson.module</groupId>
+                <version>${fasterxml.jackson.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
     <build>
         <plugins>
             <plugin>

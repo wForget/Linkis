@@ -10,14 +10,16 @@ import com.facebook.presto.client.{ClientSession, QueryStatusInfo, StatementClie
 import com.facebook.presto.spi.security.SelectedRole
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.webank.wedatasphere.linkis.common.log.LogUtils
-import com.webank.wedatasphere.linkis.common.utils.Utils
+import com.webank.wedatasphere.linkis.common.utils.{OverloadUtils, Utils}
 import com.webank.wedatasphere.linkis.engineconn.common.conf.{EngineConnConf, EngineConnConstant}
 import com.webank.wedatasphere.linkis.engineconn.computation.executor.entity.EngineConnTask
 import com.webank.wedatasphere.linkis.engineconn.computation.executor.execute.{ConcurrentComputationExecutor, EngineExecutionContext}
 import com.webank.wedatasphere.linkis.engineconn.computation.executor.parser.SQLCodeParser
+import com.webank.wedatasphere.linkis.engineconn.core.EngineConnObject
 import com.webank.wedatasphere.linkis.engineplugin.presto.conf.PrestoConfiguration._
 import com.webank.wedatasphere.linkis.engineplugin.presto.exception.{PrestoClientException, PrestoStateInvalidException}
-import com.webank.wedatasphere.linkis.manager.common.entity.resource.NodeResource
+import com.webank.wedatasphere.linkis.manager.common.entity.resource.{CommonNodeResource, LoadResource, NodeResource}
+import com.webank.wedatasphere.linkis.manager.engineplugin.common.conf.EngineConnPluginConf
 import com.webank.wedatasphere.linkis.manager.label.entity.Label
 import com.webank.wedatasphere.linkis.manager.label.entity.engine.UserCreatorLabel
 import com.webank.wedatasphere.linkis.protocol.engine.JobProgressInfo
@@ -48,7 +50,7 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
   }
 
   override def execute(engineConnTask: EngineConnTask): ExecuteResponse = {
-    val user = getUserCreatorLabel().getUser
+    val user = getUserCreatorLabel(engineConnTask.getLables).getUser
     clientSessionCache.put(engineConnTask.getTaskId, getClientSession(user, engineConnTask.getProperties))
     super.execute(engineConnTask)
   }
@@ -93,14 +95,20 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
 
   override def supportCallBackLogs(): Boolean = false
 
-  override def requestExpectedResource(expectedResource: NodeResource): NodeResource = {
-    // TODO
-    ???
-  }
+  override def requestExpectedResource(expectedResource: NodeResource): NodeResource = null
 
   override def getCurrentNodeResource(): NodeResource = {
-    // TODO
-    ???
+    val properties = EngineConnObject.getEngineCreationContext.getOptions
+    if (properties.containsKey(EngineConnPluginConf.JAVA_ENGINE_REQUEST_MEMORY.key)) {
+      val settingClientMemory = properties.get(EngineConnPluginConf.JAVA_ENGINE_REQUEST_MEMORY.key)
+      if (!settingClientMemory.toLowerCase().endsWith("g")) {
+        properties.put(EngineConnPluginConf.JAVA_ENGINE_REQUEST_MEMORY.key, settingClientMemory + "g")
+      }
+    }
+    val resource = new CommonNodeResource
+    val usedResource = new LoadResource(OverloadUtils.getProcessMaxMemory, 1)
+    resource.setUsedResource(usedResource)
+    resource
   }
 
   override def getId(): String = Sender.getThisServiceInstance.getInstance + s"_$id"
@@ -140,8 +148,8 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
       resourceEstimates, properties, preparedStatements, roles, extraCredentials, transactionId, clientRequestTimeout)
   }
 
-  private def getUserCreatorLabel(): UserCreatorLabel = {
-    this.getExecutorLabels().asScala
+  private def getUserCreatorLabel(labels: Array[Label[_]]): UserCreatorLabel = {
+    labels
       .find(l => l.isInstanceOf[UserCreatorLabel])
       .get
       .asInstanceOf[UserCreatorLabel]
