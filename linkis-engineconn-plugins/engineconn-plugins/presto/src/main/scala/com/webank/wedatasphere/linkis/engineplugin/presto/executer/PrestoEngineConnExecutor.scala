@@ -6,7 +6,7 @@ import java.util
 import java.util.{Collections, Locale, Objects, Optional, TimeZone}
 import java.util.concurrent.TimeUnit
 
-import com.facebook.presto.client.{ClientSession, QueryStatusInfo, StatementClient, StatementClientFactory}
+import com.facebook.presto.client.{ClientSession, QueryStatusInfo, SocketChannelSocketFactory, StatementClient, StatementClientFactory}
 import com.facebook.presto.spi.security.SelectedRole
 import com.google.common.cache.{Cache, CacheBuilder}
 import com.webank.wedatasphere.linkis.common.log.LogUtils
@@ -36,7 +36,7 @@ import scala.collection.JavaConverters._
 
 class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) extends ConcurrentComputationExecutor(outputPrintLimit) {
 
-  private var okHttpClient: OkHttpClient = _
+  private var okHttpClient: OkHttpClient = PrestoEngineConnExecutor.OK_HTTP_CLIENT
 
   private val executorLabels: util.List[Label[_]] = new util.ArrayList[Label[_]](2)
 
@@ -265,5 +265,14 @@ class PrestoEngineConnExecutor(override val outputPrintLimit: Int, val id: Int) 
     newSession
   }
 
+
+}
+
+object PrestoEngineConnExecutor {
+
+  private val OK_HTTP_CLIENT: OkHttpClient = new OkHttpClient.Builder().socketFactory(new SocketChannelSocketFactory)
+    .connectTimeout(PRESTO_HTTP_CONNECT_TIME_OUT.getValue, TimeUnit.SECONDS)
+    .readTimeout(PRESTO_HTTP_READ_TIME_OUT.getValue, TimeUnit.SECONDS)
+    .build()
 
 }
