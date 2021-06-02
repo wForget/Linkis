@@ -86,6 +86,7 @@ object Resource extends Logging {
     case Load => new LoadResource(0, 0)
     case Instance => new InstanceResource(0)
     case LoadInstance => new LoadInstanceResource(0, 0, 0)
+    case Presto => new PrestoResource(0,0)
     case Yarn => new YarnResource(0, 0, 0)
     case DriverAndYarn => new DriverAndYarnResource(new LoadInstanceResource(0, 0, 0), new YarnResource(0, 0, 0))
     case Special => new SpecialResource(new java.util.HashMap[String, AnyVal]())
@@ -99,6 +100,7 @@ object Resource extends Logging {
     case i: InstanceResource => new InstanceResource(0)
     case l: LoadResource => new LoadResource(0, 0)
     case li: LoadInstanceResource => new LoadInstanceResource(0, 0, 0)
+    case p: PrestoResource => new PrestoResource(0,0)
     case yarn: YarnResource => new YarnResource(0, 0, 0)
     case dy: DriverAndYarnResource =>
       if (dy.yarnResource != null && dy.yarnResource.queueName != null) {
@@ -297,6 +299,169 @@ class InstanceResource(val instances: Int) extends CPUResource(instances) {
 
   override def toString: String = toJson
 }
+
+/**
+ * Presto resource information, no initial registration, only user resource usage limit
+ * Presto资源信息，无初始化注册，只有用户资源使用上限
+ * @param groupMemory
+ * @param groupInstances
+ * @param groupName
+ */
+class PrestoResource(val groupMemory: Long, val groupInstances: Int, val groupName: String = "global", val prestoUrl: String = "") extends Resource {
+  implicit def toPrestoResource(r: Resource): PrestoResource = r match {
+    case t: PrestoResource => t
+    case _ => new PrestoResource(0, 0)
+  }
+
+  override def add(r: Resource): PrestoResource = {
+    new PrestoResource(groupMemory + r.groupMemory, groupInstances + r.groupInstances, groupName, prestoUrl)
+  }
+
+  override def minus(r: Resource): PrestoResource = {
+    new PrestoResource(groupMemory - r.groupMemory, groupInstances - r.groupInstances, groupName, prestoUrl)
+  }
+
+  override def multiplied(r: Resource): PrestoResource = {
+    new PrestoResource(groupMemory * r.groupMemory, groupInstances * r.groupInstances, groupName, prestoUrl)
+  }
+
+  override def multiplied(rate: Float): PrestoResource = {
+    new PrestoResource((groupMemory * rate).toLong, (groupInstances * rate).toInt, groupName, prestoUrl)
+  }
+
+  override def divide(r: Resource): PrestoResource = {
+    new PrestoResource(groupMemory / r.groupMemory, groupInstances / r.groupInstances, groupName, prestoUrl)
+  }
+
+  override def divide(rate: Int): PrestoResource = {
+    new PrestoResource(groupMemory / rate, groupInstances / rate, groupName, prestoUrl)
+  }
+
+  override def moreThan(r: Resource): Boolean = {
+    groupMemory > r.groupMemory && groupInstances > r.groupInstances
+  }
+
+  /**
+   * Part is greater than(部分大于)
+   *
+   * @param r
+   * @return
+   */
+  override def caseMore(r: Resource): Boolean = {
+    groupMemory > r.groupMemory || groupInstances > r.groupInstances
+  }
+
+  override def equalsTo(r: Resource): Boolean = {
+    groupMemory == r.groupMemory && groupInstances > r.groupInstances
+  }
+
+  override def toJson: String = s"""{"prestoUrl":"$prestoUrl","groupName":"$groupName","memory":"${ByteTimeUtils.bytesToString(groupMemory)}", "groupInstances":$groupInstances}"""
+
+  override def toString: String = s"Presto url(Presto集群)：$prestoUrl，Resource group name(资源组)：$groupName，group memory(组内存)：${ByteTimeUtils.bytesToString(groupMemory)}，Group instances(组任务数)：$groupInstances"
+
+  override def notLess(r: Resource): Boolean = groupMemory >= r.groupMemory && groupInstances >= r.groupInstances
+}
+
+class InstanceAndPrestoResource(val instanceResource: InstanceResource, val prestoResource: PrestoResource) extends Resource with Logging {
+
+  private implicit def InstanceAndPrestoResource(r: Resource): InstanceAndPrestoResource = r match {
+    case t: InstanceAndPrestoResource => t
+    case _ => new InstanceAndPrestoResource(new InstanceResource(0), new PrestoResource(0, 0))
+  }
+
+  def isModuleOperate(r: Resource): Boolean = {
+    if (this.prestoResource != null && r.prestoResource != null &&
+      StringUtils.isNotEmpty(this.prestoResource.groupName) &&
+      StringUtils.isNotEmpty(r.prestoResource.groupName) && this.prestoResource.groupName.equals(r.prestoResource.groupName)) {
+      info(s"Not module operate this:$this other:$r")
+      false
+    }
+    else
+      true
+  }
+
+  def isModuleOperate: Boolean = {
+    if (this.prestoResource != null && StringUtils.isNotEmpty(this.prestoResource.groupName))
+      false
+    else
+      true
+  }
+
+  override def add(r: Resource): InstanceAndPrestoResource = {
+    if (isModuleOperate(r)) {
+      new InstanceAndPrestoResource(this.instanceResource.add(r.instanceResource).asInstanceOf[InstanceResource], this.prestoResource)
+    } else {
+      new InstanceAndPrestoResource(this.instanceResource.add(r.instanceResource).asInstanceOf[InstanceResource], this.prestoResource.add(r.prestoResource))
+    }
+  }
+
+  override def minus(r: Resource): Resource = {
+    if (isModuleOperate(r)) {
+      new InstanceAndPrestoResource(this.instanceResource.minus(r.instanceResource).asInstanceOf[InstanceResource], this.prestoResource)
+    } else {
+      new InstanceAndPrestoResource(this.instanceResource.minus(r.instanceResource).asInstanceOf[InstanceResource], this.prestoResource.minus(r.prestoResource))
+    }
+  }
+
+  override def multiplied(r: Resource): Resource = {
+    throw new ResourceWarnException(111002, "Unsupported operation: multiplied")
+  }
+
+  override def multiplied(rate: Float): Resource = {
+    if (isModuleOperate) {
+      new InstanceAndPrestoResource(this.instanceResource.multiplied(rate).asInstanceOf[InstanceResource], this.prestoResource)
+    } else {
+      new InstanceAndPrestoResource(this.instanceResource.multiplied(rate).asInstanceOf[InstanceResource], this.prestoResource.multiplied(rate))
+    }
+  }
+
+  override def divide(r: Resource): Resource = throw new ResourceWarnException(111002, "Unsupported operation: multiplied")
+
+  override def divide(rate: Int): Resource = if (isModuleOperate) {
+    new InstanceAndPrestoResource(this.instanceResource.divide(rate).asInstanceOf[InstanceResource], this.prestoResource)
+  } else {
+    new InstanceAndPrestoResource(this.instanceResource.divide(rate).asInstanceOf[InstanceResource], this.prestoResource.divide(rate))
+  }
+
+  override def moreThan(r: Resource): Boolean = {
+    if (isModuleOperate(r)) {
+      this.instanceResource.moreThan(r.instanceResource)
+    } else {
+      this.instanceResource.moreThan(r.instanceResource) && this.prestoResource.moreThan(r.prestoResource)
+    }
+  }
+
+  override def caseMore(r: Resource): Boolean = if (isModuleOperate(r)) {
+    this.instanceResource.caseMore(r.instanceResource)
+  } else {
+    this.instanceResource.caseMore(r.instanceResource) || this.prestoResource.caseMore(r.prestoResource)
+  }
+
+  override def equalsTo(r: Resource): Boolean = if (isModuleOperate(r)) {
+    this.instanceResource.equalsTo(r.instanceResource)
+  } else {
+    this.instanceResource.equalsTo(r.instanceResource) && this.prestoResource.equalsTo(r.prestoResource)
+  }
+
+  override def toJson: String = {
+    var instance = "null"
+    var presto = "null"
+    if (instanceResource != null) instance = instanceResource.toJson
+    if (prestoResource != null) presto = prestoResource.toJson
+    s"""{"instance":${instance}, "presto":${presto}}"""
+  }
+
+  override def toString: String = s"Instance resources(entrance资源)：$instanceResource,Group resource(队列资源):$prestoResource"
+
+  override def notLess(r: Resource): Boolean = {
+    if (isModuleOperate(r)) {
+      this.instanceResource.notLess(r.instanceResource)
+    } else {
+      this.instanceResource.notLess(r.instanceResource) && this.prestoResource.notLess(r.prestoResource)
+    }
+  }
+}
+
 
 /**
   * Queue resource information, no initial registration, only user resource usage limit

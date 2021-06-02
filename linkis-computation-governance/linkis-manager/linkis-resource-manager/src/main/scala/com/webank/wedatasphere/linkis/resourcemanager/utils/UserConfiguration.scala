@@ -99,6 +99,9 @@ object UserConfiguration extends Logging {
       new YarnResource(USER_AVAILABLE_YARN_INSTANCE_MEMORY.getValue(userConfiguration).toLong,
         USER_AVAILABLE_YARN_INSTANCE_CPU.getValue(userConfiguration),
         USER_AVAILABLE_YARN_INSTANCE.getValue(userConfiguration), USER_AVAILABLE_YARN_QUEUE_NAME.getValue(userConfiguration)))
+    case ResourceType.Presto => new PrestoResource(USER_AVAILABLE_PRESTO_MEMORY.getValue.toLong, USER_AVAILABLE_PRESTO_INSTANCES.getValue)
+    case ResourceType.InstanceAndPresto => new InstanceAndPrestoResource(new InstanceResource(USER_AVAILABLE_INSTANCE.getValue(userConfiguration))
+      ,new PrestoResource(USER_AVAILABLE_PRESTO_MEMORY.getValue(userConfiguration).toLong, USER_AVAILABLE_PRESTO_INSTANCES.getValue(userConfiguration)))
     case ResourceType.Special => new SpecialResource(new java.util.HashMap[String, AnyVal]())
     case _ => throw new RMWarnException(11003, "not supported resource result type ")
   }

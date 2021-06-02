@@ -53,6 +53,10 @@ object RMConfiguration {
   //configuration
   val CLOUD_CONSOLE_CONFIGURATION_SPRING_APPLICATION_NAME = CommonVars("wds.linkis.rm.conf.application.name", "linkis-ps-publicservice")
 
+  //presto
+  val USER_AVAILABLE_PRESTO_MEMORY = CommonVars[ByteType]("wds.linkis.presto.max.memory", new ByteType("100GB"))
+  val USER_AVAILABLE_PRESTO_INSTANCES = CommonVars[Int]("wds.linkis.presto.max.instances", 20)
+
   val ALERT_SUB_SYSTEM_ID = CommonVars("wds.linkis.rm.alert.system.id", "5136")
   val ALERT_DEFAULT_UM = CommonVars("wds.linkis.rm.alert.default.um", "enjoyyin,johnnwang,shanhuang")
   val ALERT_IMS_URL = CommonVars("wds.linkis.rm.alert.ims.url", "127.0.0.1")
