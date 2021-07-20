@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.webank.wedatasphere.linkis.rpc.sender.eureka
+package com.webank.wedatasphere.linkis.rpc.sender
 
 import com.webank.wedatasphere.linkis.common.ServiceInstance
 import com.webank.wedatasphere.linkis.common.utils.Utils
